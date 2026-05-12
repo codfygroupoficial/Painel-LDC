@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Estadias LDC</title>
+<style>
+:root{
+--bg:#f4f7fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;--dark:#111827;
+--green:#16a34a;--orange:#f59e0b;--red:#dc2626;--blue:#2563eb;--purple:#7c3aed;
+--shadow:0 4px 18px rgba(15,23,42,.04)
+}
+body.dark{
+--bg:#0f172a;--card:#111827;--text:#f9fafb;--muted:#9ca3af;--line:#374151;--dark:#020617;
+--shadow:0 4px 22px rgba(0,0,0,.35)
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:var(--bg);color:var(--text)}
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#eef2ff,#f8fafc)}
+body.dark .login{background:linear-gradient(135deg,#020617,#111827)}
+.login-card{width:100%;max-width:390px;background:var(--card);border:1px solid var(--line);border-radius:28px;padding:32px;box-shadow:0 20px 60px rgba(15,23,42,.12)}
+.logo{width:68px;height:68px;border-radius:22px;background:var(--dark);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;margin-bottom:18px}
+h1{font-size:28px;letter-spacing:-.5px}
+p{color:var(--muted);font-size:14px;margin-top:6px}
+.login-card input{margin-top:12px}
+input,select,textarea{width:100%;padding:13px 14px;border:1px solid #d8dee8;border-radius:14px;background:var(--card);color:var(--text);font-size:14px;outline:none;transition:.2s}
+textarea{min-height:96px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(37,99,235,.08)}
+button{border:none;border-radius:14px;padding:12px 16px;font-weight:700;cursor:pointer;transition:.2s;background:var(--dark);color:white}
+button:hover{transform:translateY(-1px);filter:brightness(.98)}
+.btn-green{background:var(--green)}.btn-orange{background:var(--orange)}.btn-red{background:var(--red)}.btn-blue{background:var(--blue)}.btn-purple{background:var(--purple)}
+.btn-light{background:#eef2f7;color:#111827}.btn-small{padding:8px 11px;font-size:12px;width:auto}.btn-full{width:100%;margin-top:14px}
+body.dark .btn-light{background:#1f2937;color:#f9fafb;border:1px solid var(--line)}
+.painel{display:none}
+.appbar{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.appbar-inner{max-width:1400px;margin:auto;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.user-pill{background:#f3f4f6;border:1px solid var(--line);padding:9px 12px;border-radius:999px;font-size:13px;color:#374151;font-weight:700}
+body.dark .user-pill{background:#1f2937;color:#e5e7eb}
+.notif-wrap{position:relative}
+.notif-bell{width:auto;background:var(--card);color:var(--text);border:1px solid var(--line);padding:10px 14px;border-radius:999px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.notif-bell.alerta{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.notif-num{background:#dc2626;color:white;min-width:22px;height:22px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;padding:0 6px}
+.notif-box{display:none;position:absolute;right:0;top:48px;width:330px;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 50px rgba(15,23,42,.18);padding:14px;z-index:20}
+.notif-box.show{display:block}.notif-box h3{font-size:16px;margin-bottom:6px}.notif-box p{font-size:13px;margin-bottom:10px}
+.notif-item{padding:10px;border-radius:12px;background:#f8fafc;border:1px solid #e5e7eb;margin-top:8px;font-size:13px}
+body.dark .notif-item{background:#1f2937;border-color:#374151}
+.notif-item strong{display:block;margin-bottom:3px}
+.container{max-width:1400px;margin:auto;padding:20px}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.stat span{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.stat strong{display:block;font-size:26px;margin-top:8px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:18px;box-shadow:var(--shadow)}
+.box-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.box-title h2{font-size:20px}
+.tabs{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}.tab{background:var(--card);color:var(--text);border:1px solid var(--line)}.tab.active{background:#111827;color:white}
+.aba{display:none}.aba.active{display:block}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin:0 0 6px 2px}
+.calc-preview{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.preview-card{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:18px;padding:14px}
+body.dark .preview-card{background:#1f2937;border-color:#475569}
+.preview-card span{font-size:12px;color:var(--muted);font-weight:700}.preview-card strong{display:block;font-size:22px;margin-top:5px}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:12px}
+.table-wrap{background:var(--card);border:1px solid var(--line);border-radius:24px;overflow:auto;box-shadow:var(--shadow)}
+table{width:100%;border-collapse:collapse;min-width:1600px}
+th{background:#111827;color:white;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.4px;padding:14px}
+td{padding:14px;border-bottom:1px solid #edf0f4;font-size:14px;vertical-align:middle}
+body.dark td{border-bottom-color:#374151}
+tr:hover{background:#fafcff}body.dark tr:hover{background:#172033}
+.muted{font-size:12px;color:var(--muted)}
+.plate{font-weight:900;background:#f3f4f6;border:1px solid var(--line);padding:7px 10px;border-radius:10px;display:inline-block}
+body.dark .plate{background:#1f2937}
+.status{padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;display:inline-block}
+.status-aberto{background:#fef3c7;color:#92400e}.status-feito{background:#dcfce7;color:#166534}.status-finalizado{background:#e5e7eb;color:#374151}.status-lancar{background:#ede9fe;color:#5b21b6}
+.prio{padding:6px 9px;border-radius:999px;font-size:11px;font-weight:900;display:inline-block}
+.prio-normal{background:#dcfce7;color:#166534}.prio-media{background:#fef3c7;color:#92400e}.prio-urgente{background:#fee2e2;color:#991b1b}
+.linha-finalizada{opacity:.55;background:#f3f4f6}.linha-finalizada:hover{background:#eef2f7}
+body.dark .linha-finalizada{background:#1f2937}
+.wa-link{display:inline-block;text-decoration:none;background:#22c55e;color:white;border-radius:12px;padding:8px 11px;font-size:12px;font-weight:900}
+.actions{display:flex;gap:6px;flex-wrap:wrap}.empty{text-align:center;padding:28px;color:var(--muted)}
+.anexo-item{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:7px 9px;font-size:12px;color:#374151;display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:5px}
+body.dark .anexo-item{background:#1f2937;border-color:#374151;color:#e5e7eb}
+.anexo-link{color:#2563eb;font-weight:800;text-decoration:none}.file-hint{font-size:11px;color:#6b7280;margin-top:5px}
+.toast{position:fixed;right:20px;bottom:20px;background:#111827;color:white;border-radius:18px;padding:14px 16px;box-shadow:0 20px 50px rgba(0,0,0,.25);display:none;z-index:50;max-width:330px}
+.toast.show{display:block}
+.backup-row{display:flex;gap:10px;flex-wrap:wrap}
+.backup-row input{max-width:320px}
+
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}.modal-card{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:24px;width:min(980px,96vw);max-height:88vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.35);padding:18px}.modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.preview-frame{width:100%;height:70vh;border:1px solid var(--line);border-radius:16px;background:white}.preview-img{max-width:100%;border-radius:16px;border:1px solid var(--line)}.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.chart-box{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}canvas{width:100%;max-width:100%;background:transparent}.rank-list{display:grid;gap:10px}.rank-item{display:flex;justify-content:space-between;gap:10px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:12px}.dark .rank-item{background:#1f2937;border-color:#374151}.mobile-card-list{display:none}.mobile-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}.mobile-card strong{display:block}.mobile-card .row{display:flex;justify-content:space-between;gap:10px;margin-top:8px;font-size:13px}.print-area{display:none}
+
+.login{position:relative;overflow:hidden}
+.login:before{content:"";position:absolute;inset:-120px;background:radial-gradient(circle at 20% 20%,rgba(37,99,235,.22),transparent 28%),radial-gradient(circle at 80% 10%,rgba(124,58,237,.20),transparent 30%),radial-gradient(circle at 55% 90%,rgba(22,163,74,.14),transparent 30%);animation:floatBg 9s ease-in-out infinite alternate}
+@keyframes floatBg{from{transform:translate3d(-12px,-8px,0) scale(1)}to{transform:translate3d(12px,8px,0) scale(1.04)}}
+.login-card{position:relative;z-index:1;backdrop-filter:blur(10px)}
+.login-hero{margin-bottom:18px;padding:14px;border-radius:20px;background:linear-gradient(135deg,#111827,#2563eb);color:white;box-shadow:0 18px 45px rgba(37,99,235,.22)}
+.login-hero p{color:#dbeafe}.login-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.login-badges span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}.login-footer{margin-top:18px;text-align:center;font-size:12px;color:var(--muted);font-weight:900}.admin-login-box{margin-top:14px;border:1px solid var(--line);border-radius:20px;padding:12px;background:#f8fafc}.dark .admin-login-box{background:#1f2937}.admin-login-box summary{cursor:pointer;font-weight:900;font-size:13px;color:var(--text);list-style:none}.admin-login-box summary::-webkit-details-marker{display:none}.admin-login-grid{display:grid;gap:9px;margin-top:10px}.foto-preview{width:54px;height:54px;border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;border:2px solid rgba(255,255,255,.75);background-size:cover;background-position:center}.usuario-admin-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;margin-top:7px}.usuario-admin-item small{color:var(--muted);display:block}.avatar.foto{background-size:cover;background-position:center;color:transparent}
+.profile-pill{display:flex;align-items:center;gap:10px;background:#f3f4f6;border:1px solid var(--line);padding:6px 10px;border-radius:999px;color:#374151;font-weight:800}.dark .profile-pill{background:#1f2937;color:#e5e7eb}.avatar{width:34px;height:34px;border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;display:inline-flex;align-items:center;justify-content:center;font-weight:900;border:2px solid rgba(255,255,255,.65)}.avatar.big{width:48px;height:48px;font-size:18px}.profile-text{display:flex;flex-direction:column;line-height:1.15}.profile-text small{font-size:11px;color:var(--muted);font-weight:800}
+.live-panel{display:grid;grid-template-columns:1.1fr 2fr;gap:14px;margin-bottom:18px}.welcome-card{background:linear-gradient(135deg,#111827,#2563eb);color:white;border-radius:24px;padding:20px;box-shadow:var(--shadow);overflow:hidden;position:relative}.welcome-card:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-60px;top:-60px;background:rgba(255,255,255,.09)}.welcome-card p{color:#dbeafe}.activity-card{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:18px;box-shadow:var(--shadow)}.activity-list{display:grid;gap:9px;max-height:210px;overflow:auto}.activity-item{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);background:#f8fafc;border-radius:16px;padding:10px}.dark .activity-item{background:#1f2937}.activity-dot{width:10px;height:10px;margin-top:5px;border-radius:999px;background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.12)}.activity-item strong{display:block;font-size:13px}.activity-item span{font-size:12px;color:var(--muted)}
+.drop-zone{grid-column:1/-1;border:2px dashed #93c5fd;background:rgba(37,99,235,.06);border-radius:20px;padding:18px;text-align:center;transition:.2s}.drop-zone.dragover{background:rgba(37,99,235,.16);border-color:#2563eb;transform:scale(1.01)}.drop-zone strong{display:block}.drop-zone p{font-size:12px}.drop-files{margin-top:8px;font-size:12px;color:var(--muted);font-weight:800}
+.app-footer{text-align:center;color:var(--muted);font-weight:900;font-size:13px;padding:26px 0 10px}.app-footer span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:10px 14px;box-shadow:var(--shadow)}
+@media(max-width:900px){.live-panel{grid-template-columns:1fr}.profile-text{display:none}.drop-zone{padding:14px}}
+
+@media(max-width:700px){.table-wrap.mobile-hide{display:none}.mobile-card-list{display:block}.chart-grid{grid-template-columns:1fr}.notif-box{right:auto;left:0;width:300px}.stats{grid-template-columns:1fr 1fr}.appbar-inner>div:last-child{width:100%}}
+
+
+.timer-badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;background:#e0f2fe;color:#075985;white-space:nowrap}
+.timer-badge.timer-alerta{background:#fee2e2;color:#991b1b}
+.timer-badge.timer-medio{background:#fef3c7;color:#92400e}
+body.dark .timer-badge{background:#0f2a3d;color:#bae6fd}
+body.dark .timer-badge.timer-alerta{background:#3f1212;color:#fecaca}
+body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
+
+@media(max-width:1100px){.stats{grid-template-columns:1fr 1fr 1fr}.filters{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.appbar-inner{align-items:flex-start;flex-direction:column}.stats{grid-template-columns:1fr 1fr}.form-grid,.filters,.calc-preview{grid-template-columns:1fr}.container{padding:14px}h1{font-size:24px}.box{padding:14px}table{min-width:1200px}}
+
+.badge-logistica{background:#dbeafe;color:#1d4ed8;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;display:inline-block}
+.badge-transportes{background:#ede9fe;color:#6d28d9;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;display:inline-block}
+.sound-pulse{animation:soundPulse .35s ease}@keyframes soundPulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+</style>
+</head>
+<body>
+<div class="login" id="login">
+  <div class="login-card">
+    <div class="login-hero">
+      <div class="logo" style="background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22)">LDC</div>
+      <h1>Painel de Estadias</h1>
+      <p>Sistema moderno para lançar, acompanhar pendências e finalizar estadias com controle total.</p>
+      <div class="login-badges"><span>🔔 Alertas</span><span>📎 Anexos</span><span>📊 Relatórios</span></div>
+    </div>
+    <input id="usuario" placeholder="Usuário">
+    <input id="senha" type="password" placeholder="Senha">
+    <button class="btn-full" onclick="entrar()">Entrar no painel</button>
+    <p style="margin-top:14px;font-size:12px;color:#9ca3af">Solicite suas credenciais ao administrador.</p>
+
+    <details class="admin-login-box" id="areaAdminLogin">
+      <summary>⚙️ Admin: criar novo usuário</summary>
+      <div class="admin-login-grid">
+        <input id="adminSenhaCriar" type="password" placeholder="Senha do admin para liberar">
+        <input id="novoNome" placeholder="Nome do usuário">
+        <input id="novoLogin" placeholder="Login do usuário" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9._-]/g,'')">
+        <input id="novaSenha" type="password" placeholder="Senha do usuário">
+        <select id="novoCargo">
+          <option value="Operador">Operador</option>
+          <option value="Admin">Admin</option>
+          <option value="Visualizador">Visualizador</option>
+        </select>
+        <div style="display:flex;gap:10px;align-items:center">
+          <div class="foto-preview" id="previewNovoUsuario">?</div>
+          <input id="novaFoto" type="file" accept="image/*" onchange="previewFotoNovoUsuario()">
+        </div>
+        <button class="btn-purple btn-full" onclick="criarUsuarioAdmin()">Criar usuário</button>
+        <div id="listaUsuariosLogin"></div>
+      </div>
+    </details>
+
+    <div class="login-footer">by Manoel</div>
+  </div>
+</div>
+
+<div class="painel" id="painel">
+  <div class="appbar">
+    <div class="appbar-inner">
+      <div>
+        <h1>🚛 Painel de Estadias LDC</h1>
+        <p>Controle de estadias lançadas e estadias a lançar.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div class="notif-wrap">
+          <button id="botaoSino" class="notif-bell" onclick="abrirNotificacoes()">🔔 <span>Notificações</span> <span id="contadorSino" class="notif-num">0</span></button>
+          <div id="caixaNotificacoes" class="notif-box">
+            <h3>Estadias a lançar</h3>
+            <p id="textoNotificacao">Nenhuma estadia pendente.</p>
+            <div id="listaNotificacoes"></div>
+            <button class="btn-purple btn-full" onclick="irParaALancar()">Ver estadias a lançar</button>
+          </div>
+        </div>
+        <button id="botaoSom" class="btn-light" onclick="ativarSomNotificacao()">🔇 Ativar som</button>
+        <button id="botaoTema" class="btn-light" onclick="alternarTema()">🌙 Modo escuro</button>
+        <div class="profile-pill" id="perfilUsuario">
+          <span class="avatar" id="avatarUsuario">?</span>
+          <span class="profile-text"><span id="usuarioLogadoTexto">Logado</span><small id="cargoUsuarioTexto">Operador</small></span>
+        </div>
+        <button class="btn-light" onclick="logout()">Sair</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><span>Total lançadas</span><strong id="totalQtd">0</strong></div>
+      <div class="stat"><span>Valor total</span><strong id="totalValor">R$ 0,00</strong></div>
+      <div class="stat"><span>Abertas</span><strong id="totalAbertas">0</strong></div>
+      <div class="stat"><span>Feitas</span><strong id="totalFeitas">0</strong></div>
+      <div class="stat"><span>A lançar</span><strong id="totalALancar">0</strong></div>
+      <div class="stat"><span>Urgentes</span><strong id="totalUrgentes">0</strong></div>
+    </div>
+
+    <div class="live-panel">
+      <div class="welcome-card">
+        <div style="display:flex;align-items:center;gap:12px;position:relative;z-index:1">
+          <span class="avatar big" id="avatarBoasVindas">?</span>
+          <div><h2 id="boasVindasTitulo">Bem-vindo</h2><p id="boasVindasTexto">Pronto para controlar as estadias de hoje.</p></div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="box-title" style="margin-bottom:10px"><h2>Atividade ao vivo</h2><span class="muted">Últimas ações do sistema</span></div>
+        <div class="activity-list" id="atividadeAoVivo"></div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button id="tabLancadas" class="tab active" onclick="mudarAba('lancadas')">Estadias lançadas</button>
+      <button id="tabALancar" class="tab" onclick="mudarAba('alancar')">Estadias a lançar</button>
+      <button id="tabHistorico" class="tab" onclick="mudarAba('historico')">Histórico</button>
+      <button id="tabRelatorios" class="tab" onclick="mudarAba('relatorios')">Relatórios</button>
+      <button id="tabBackup" class="tab" onclick="mudarAba('backup')">Backup</button>
+    </div>
+
+    <div id="abaLancadas" class="aba active">
+      <div class="box">
+        <div class="box-title">
+          <h2>Adicionar estadia lançada</h2>
+          <span class="muted">Cálculo: peso em toneladas × R$ 0,80 × horas após 12h</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Número do chamado</label><input id="chamado" placeholder="Ex: 16820752" oninput="autoSalvarFormulario()"></div>
+          <div class="field"><label>Motorista</label><input id="motorista" placeholder="Nome do motorista" oninput="autoSalvarFormulario()"></div>
+          <div class="field"><label>WhatsApp do motorista</label><input id="telefoneMotorista" placeholder="Ex: 64999999999" oninput="this.value=this.value.replace(/[^0-9]/g,'');autoSalvarFormulario()"></div>
+          <div class="field"><label>Transportadora</label><input id="transportadora" placeholder="Ex: LDC / Terceiro" oninput="autoSalvarFormulario()"></div>
+          <div class="field"><label>Prioridade</label><select id="prioridade" onchange="autoSalvarFormulario()"><option value="Normal">Normal</option><option value="Média">Média</option><option value="Urgente">Urgente</option></select></div>
+          <div class="field"><label>Pago por</label><select id="pagoPor" onchange="autoSalvarFormulario()"><option value="Logística">Pago por Logística</option><option value="Transportes">Pago por Transportes</option></select></div>
+          <div class="field"><label>Placa</label><input id="placa" placeholder="Ex: JBU0H16" oninput="this.value=this.value.toUpperCase();autoSalvarFormulario()"></div>
+          <div class="field"><label>Peso</label><input id="peso" placeholder="Ex: 38380" oninput="calcular();autoSalvarFormulario()"></div>
+          <div class="field"><label>Data chegada</label><input id="chegadaData" type="date" onchange="calcular();autoSalvarFormulario()"></div>
+          <div class="field"><label>Hora chegada</label><input id="chegadaHora" type="time" onchange="calcular();autoSalvarFormulario()"></div>
+          <div class="field"><label>Data saída</label><input id="saidaData" type="date" onchange="calcular();autoSalvarFormulario()"></div>
+          <div class="field"><label>Hora saída</label><input id="saidaHora" type="time" onchange="calcular();autoSalvarFormulario()"></div>
+        </div>
+        <div class="calc-preview">
+          <div class="preview-card"><span>Horas válidas</span><strong id="horasPreview">0,00 h</strong></div>
+          <div class="preview-card"><span>Valor automático</span><strong id="valorPreview">R$ 0,00</strong></div>
+        </div>
+        <button class="btn-green btn-full" onclick="adicionar()">Salvar estadia lançada</button>
+      </div>
+
+      <div class="box">
+        <div class="box-title">
+          <h2>Consultar estadias lançadas</h2>
+          <button class="btn-light btn-small" onclick="limparFiltros()">Limpar filtros</button>
+        </div>
+        <div class="filters">
+          <input id="pesquisa" placeholder="Pesquisar placa, motorista, chamado ou transportadora..." oninput="render()">
+          <select id="filtroStatus" onchange="render()"><option value="">Todos os status</option><option value="Aberto">Abertas</option><option value="Feito">Feitas</option><option value="Finalizado">Finalizadas</option></select>
+          <select id="filtroUsuario" onchange="render()"><option value="">Todos usuários</option></select>
+          <input id="filtroDataInicio" type="date" onchange="render()">
+          <input id="filtroDataFim" type="date" onchange="render()">
+        </div>
+      </div>
+
+      <div class="table-wrap mobile-hide">
+        <table>
+          <thead><tr><th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Placa</th><th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th><th>Prioridade</th><th>Lançado por</th><th>Dia lançado</th><th>WhatsApp</th><th>Tempo pendente a sair</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tabela"></tbody>
+        </table>
+      </div>
+      <div id="cardsLancadas" class="mobile-card-list"></div>
+    </div>
+
+    <div id="abaALancar" class="aba">
+      <div class="box">
+        <div class="box-title">
+          <h2>Adicionar estadia a lançar</h2>
+          <span class="muted">Cadastre a placa, prioridade, transportadora e até 2 documentos reais para lançar depois.</span>
+        </div>
+        <div class="form-grid">
+          <div class="field"><label>Placa</label><input id="prePlaca" placeholder="Ex: JBU0H16" oninput="this.value=this.value.toUpperCase()"></div>
+          <div class="field"><label>Transportadora</label><input id="preTransportadora" placeholder="Ex: LDC / Terceiro"></div>
+          <div class="field"><label>Prioridade</label><select id="prePrioridade"><option value="Normal">Normal</option><option value="Média">Média</option><option value="Urgente">Urgente</option></select></div>
+          <div class="drop-zone" id="dropZoneAnexos" onclick="preDoc1.click()" ondragover="arrastarAnexos(event)" ondragleave="sairArrastarAnexos(event)" ondrop="soltarAnexos(event)">
+            <strong>📎 Arraste os anexos aqui</strong>
+            <p>Ou clique para escolher os documentos. Limite de 2 arquivos.</p>
+            <div class="drop-files" id="dropFilesTexto">Nenhum arquivo selecionado.</div>
+          </div>
+          <div class="field"><label>Documento 1</label><input id="preDoc1" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx" onchange="atualizarTextoAnexos()"><div class="file-hint">PDF, imagem, Word ou Excel</div></div>
+          <div class="field"><label>Documento 2</label><input id="preDoc2" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx" onchange="atualizarTextoAnexos()"><div class="file-hint">Opcional</div></div>
+          <div class="field"><label>Observação</label><input id="preObs" placeholder="Ex: aguardando lançamento, conferir documentos..."></div>
+        </div>
+        <button class="btn-purple btn-full" onclick="adicionarALancar()">Salvar em estadias a lançar</button>
+      </div>
+
+      <div class="box">
+        <div class="box-title">
+          <h2>Consultar estadias a lançar</h2>
+          <button class="btn-light btn-small" onclick="limparFiltrosPre()">Limpar filtros</button>
+        </div>
+        <div class="filters">
+          <input id="pesquisaPre" placeholder="Pesquisar placa ou transportadora..." oninput="render()">
+          <select id="filtroPreUsuario" onchange="render()"><option value="">Todos usuários</option></select>
+          <select id="filtroPreStatus" onchange="render()"><option value="">Todos</option><option value="A lançar">A lançar</option></select>
+          <select id="filtroPrePrioridade" onchange="render()"><option value="">Todas prioridades</option><option value="Urgente">Urgente</option><option value="Média">Média</option><option value="Normal">Normal</option></select>
+          <button class="btn-light" onclick="render()">Filtrar</button>
+        </div>
+      </div>
+
+      <div class="table-wrap mobile-hide">
+        <table>
+          <thead><tr><th>Placa</th><th>Transportadora</th><th>Prioridade</th><th>Documentos anexados</th><th>Observação</th><th>Criado por</th><th>Tempo pendente a lançar</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="tabelaPre"></tbody>
+        </table>
+      </div>
+      <div id="cardsPre" class="mobile-card-list"></div>
+    </div>
+
+    <div id="abaHistorico" class="aba">
+      <div class="box">
+        <div class="box-title">
+          <h2>Histórico de alterações</h2>
+          <button class="btn-red btn-small" onclick="limparHistorico()">Limpar histórico</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Detalhes</th></tr></thead>
+            <tbody id="tabelaHistorico"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="abaRelatorios" class="aba">
+      <div class="box">
+        <div class="box-title">
+          <h2>Relatórios e gráficos</h2>
+          <span class="muted">Resumo visual das estadias lançadas e pendentes.</span>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-box"><h3>Valores por dia</h3><canvas id="graficoValores" width="600" height="300"></canvas></div>
+          <div class="chart-box"><h3>Status das estadias</h3><canvas id="graficoStatus" width="600" height="300"></canvas></div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>Ranking</h2><button class="btn-blue btn-small" onclick="imprimirRelatorio()">Imprimir relatório/PDF</button></div>
+        <div class="chart-grid">
+          <div><h3>Quem lançou mais</h3><div id="rankingUsuarios" class="rank-list"></div></div>
+          <div><h3>Transportadoras com mais estadias</h3><div id="rankingTransportadoras" class="rank-list"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="abaBackup" class="aba">
+      <div class="box" style="border-left:4px solid #f59e0b">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <span style="font-size:22px">⚠️</span>
+          <div>
+            <strong>Dados armazenados apenas neste navegador</strong>
+            <p style="margin-top:4px">Ao trocar de computador, navegador ou limpar o cache, os dados são perdidos. Para compartilhar entre dispositivos, exporte o backup JSON e importe no outro dispositivo.</p>
+            <p style="margin-top:6px;font-size:12px;color:#6b7280">✅ Sincronização entre abas do mesmo navegador: ativa automaticamente.</p>
+          </div>
+        </div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>Armazenamento local</h2><span class="muted">Uso do localStorage neste navegador.</span></div>
+        <div id="storageInfo" style="margin-bottom:10px"></div>
+      </div>
+      <div class="box">
+        <div class="box-title"><h2>Backup e exportação</h2><span class="muted">Salve seus dados antes de limpar navegador ou trocar de computador.</span></div>
+        <div class="backup-row">
+          <button class="btn-blue" onclick="exportarCSV()">Exportar Excel/CSV</button>
+          <button class="btn-purple" onclick="exportarBackup()">Exportar backup JSON</button>
+          <input id="importBackup" type="file" accept=".json">
+          <button class="btn-green" onclick="importarBackup()">Importar backup</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div id="bannerBackup" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99;background:#1e3a5f;color:white;padding:14px 20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.25)">
+  <span style="font-size:14px">💾 <strong>Você não exporta um backup há 3 ou mais dias.</strong> Dados ficam apenas neste navegador — exporte para não perder nada.</span>
+  <div style="display:flex;gap:10px;flex-shrink:0">
+    <button onclick="exportarBackupEDispensar()" style="background:#22c55e;color:white;border:none;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer">Exportar agora</button>
+    <button onclick="dispensarBanner()" style="background:rgba(255,255,255,.15);color:white;border:none;border-radius:10px;padding:9px 14px;font-weight:700;cursor:pointer">Lembrar depois</button>
+  </div>
+</div>
+
+  <div class="app-footer"><span>by Manoel</span></div>
+
+<div class="modal" id="modalPreview">
+  <div class="modal-card">
+    <div class="modal-head"><h2 id="previewTitulo">Preview</h2><button class="btn-red btn-small" onclick="fecharPreview()">Fechar</button></div>
+    <div id="previewConteudo"></div>
+  </div>
+</div>
+
+<script>
+const SALT='ldc-painel-2024'
+async function hashSenha(s){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s+SALT));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+function estaHasheado(s){return/^[0-9a-f]{64}$/.test(s)}
+async function migrarSenhas(){let changed=false;for(let u of usuarios){if(!estaHasheado(u.senha)){u.senha=await hashSenha(u.senha);changed=true}}if(changed)salvarUsuarios()}
+
+let usuariosPadrao=[{usuario:'admin',senha:'1234',nome:'Administrador',cargo:'Admin',avatar:'AD',foto:''},{usuario:'jamis',senha:'1122',nome:'Jamis',cargo:'Operador',avatar:'JA',foto:''}]
+let usuarios=JSON.parse(localStorage.getItem('usuariosPainelLDC'))||usuariosPadrao
+let usuarioAtual=''
+let usuarioPerfil=null
+let anexosArrastados=[]
+let estadias=JSON.parse(localStorage.getItem('estadias'))||[]
+let estadiasALancar=JSON.parse(localStorage.getItem('estadiasALancar'))||[]
+let historico=JSON.parse(localStorage.getItem('historicoEstadias'))||[]
+let tema=localStorage.getItem('temaPainel')||'claro'
+if(tema==='escuro'){document.body.classList.add('dark')}
+
+function $(id){return document.getElementById(id)}
+function toastMsg(msg){toast.innerText=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
+function registrarHistorico(acao,detalhes){historico.unshift({data:new Date().toLocaleString('pt-BR'),usuario:usuarioAtual||'-',acao,detalhes});historico=historico.slice(0,300);salvar();renderAtividadeAoVivo()}
+async function entrar(){let u=usuario.value.trim().toLowerCase();let s=await hashSenha(senha.value.trim());let ok=usuarios.find(x=>x.usuario===u&&x.senha===s);if(!ok){alert('Login inválido');return}usuarioAtual=ok.usuario;usuarioPerfil=ok;login.style.display='none';painel.style.display='block';aplicarPerfilUsuario();carregarRascunho();render();registrarHistorico('Login','Usuário entrou no painel')}
+function logout(){registrarHistorico('Logout','Usuário saiu do painel');location.reload()}
+function salvar(){
+  try{
+    localStorage.setItem('estadias',JSON.stringify(estadias));
+    localStorage.setItem('estadiasALancar',JSON.stringify(estadiasALancar));
+    localStorage.setItem('historicoEstadias',JSON.stringify(historico));
+    localStorage.setItem('usuariosPainelLDC',JSON.stringify(usuarios));
+    verificarArmazenamento();
+    emitirSync();
+  }catch(e){
+    if(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'){
+      alert('⚠️ Armazenamento cheio!\n\nO navegador não conseguiu salvar os dados. Exporte um backup agora e remova estadias antigas ou anexos grandes para liberar espaço.');
+    }else{throw e}
+  }
+}
+function verificarArmazenamento(){
+  const el=document.getElementById('storageInfo');if(!el)return;
+  let total=0;for(let k in localStorage){if(localStorage.hasOwnProperty(k))total+=((localStorage[k].length+k.length)*2);}
+  const usadoMB=(total/1024/1024).toFixed(2);
+  const limiteEstimadoMB=5;
+  const pct=Math.min(100,Math.round((total/(limiteEstimadoMB*1024*1024))*100));
+  const cor=pct>=80?'#dc2626':pct>=50?'#f59e0b':'#16a34a';
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+      <span>Usado: <strong>${usadoMB} MB</strong> de ~${limiteEstimadoMB} MB estimados</span>
+      <span style="color:${cor};font-weight:900">${pct}%</span>
+    </div>
+    <div style="background:#e5e7eb;border-radius:999px;height:10px;overflow:hidden">
+      <div style="background:${cor};width:${pct}%;height:100%;border-radius:999px;transition:.4s"></div>
+    </div>
+    ${pct>=80?'<p style="color:#dc2626;font-weight:700;margin-top:8px">⚠️ Armazenamento quase cheio! Exporte um backup e exclua estadias antigas.</p>':''}
+  `;
+}
+function salvarUsuarios(){localStorage.setItem('usuariosPainelLDC',JSON.stringify(usuarios));renderUsuariosLogin()}
+function numeroBR(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
+function moedaParaNumero(v){return Number(String(v||'').replace('R$','').replaceAll(' ','').replaceAll('.','').replace(',','.'))||0}
+function formatarData(d,h){if(!d||!h)return '-';let p=d.split('-');return p[2]+'/'+p[1]+'/'+p[0]+' '+h}
+function dataLancamentoISO(e){let txt=e.dataLancamento||'';let dia=txt.split(',')[0]||'';let p=dia.split('/');if(p.length!==3)return '';return `${p[2]}-${p[1]}-${p[0]}`}
+function parseDataBR(txt){
+  if(!txt)return null;
+  let partes=String(txt).split(',');
+  let data=(partes[0]||'').trim();
+  let hora=(partes[1]||'00:00:00').trim();
+  let p=data.split('/');
+  if(p.length!==3)return null;
+  let h=hora.split(':');
+  return new Date(Number(p[2]),Number(p[1])-1,Number(p[0]),Number(h[0]||0),Number(h[1]||0),Number(h[2]||0));
+}
+function formatarTempoPendente(inicioTxt){
+  let inicio=parseDataBR(inicioTxt);
+  if(!inicio||isNaN(inicio.getTime()))return '-';
+  let ms=Date.now()-inicio.getTime();
+  if(ms<0)ms=0;
+  let min=Math.floor(ms/60000);
+  let dias=Math.floor(min/1440);
+  let horas=Math.floor((min%1440)/60);
+  let minutos=min%60;
+  if(dias>0)return `${dias}d ${horas}h`;
+  if(horas>0)return `${horas}h ${minutos}min`;
+  return `${minutos}min`;
+}
+function classeTimer(inicioTxt){
+  let inicio=parseDataBR(inicioTxt);
+  if(!inicio||isNaN(inicio.getTime()))return '';
+  let horas=(Date.now()-inicio.getTime())/3600000;
+  if(horas>=24)return 'timer-alerta';
+  if(horas>=8)return 'timer-medio';
+  return '';
+}
+function timerHtml(inicioTxt,tipo){
+  if(!inicioTxt)return '-';
+  return `<span class="timer-badge ${classeTimer(inicioTxt)}">⏱️ ${formatarTempoPendente(inicioTxt)}</span><br><span class="muted">${tipo}</span>`;
+}
+
+function badgePagoPor(v){return v==='Transportes'?'<span class="badge-transportes">Transportes</span>':'<span class="badge-logistica">Logística</span>'}
+function classePrioridade(p){return p==='Urgente'?'prio-urgente':p==='Média'?'prio-media':'prio-normal'}
+function aplicarAvatar(el,p){if(!el)return;el.classList.remove('foto');el.style.backgroundImage='';el.style.color='white';if(p&&p.foto){el.classList.add('foto');el.style.backgroundImage=`url(${p.foto})`;el.innerText='';}else{el.innerText=(p&&p.avatar)||'?';}}
+function aplicarPerfilUsuario(){let p=usuarioPerfil||usuarios.find(x=>x.usuario===usuarioAtual)||{nome:usuarioAtual,cargo:'Operador',avatar:(usuarioAtual||'?').slice(0,2).toUpperCase(),foto:''};usuarioLogadoTexto.innerText=p.nome||usuarioAtual;cargoUsuarioTexto.innerText=p.cargo||'Operador';aplicarAvatar(avatarUsuario,p);aplicarAvatar(avatarBoasVindas,p);boasVindasTitulo.innerText='Bem-vindo, '+(p.nome||usuarioAtual);boasVindasTexto.innerText='Você está logado como '+(p.cargo||'Operador')+' no painel LDC.'}
+function iniciais(nome,login){return String(nome||login||'?').split(' ').filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?'}
+function fotoParaBase64(input){return new Promise(resolve=>{let file=input.files&&input.files[0];if(!file){resolve('');return}let reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.readAsDataURL(file)})}
+async function previewFotoNovoUsuario(){let foto=await fotoParaBase64(novaFoto);previewNovoUsuario.style.backgroundImage=foto?`url(${foto})`:'';previewNovoUsuario.innerText=foto?'':'?';previewNovoUsuario.dataset.foto=foto||''}
+function renderUsuariosLogin(){if(!document.getElementById('listaUsuariosLogin'))return;listaUsuariosLogin.innerHTML=usuarios.map(u=>`<div class="usuario-admin-item"><div style="display:flex;align-items:center;gap:8px"><span class="foto-preview" style="width:34px;height:34px;background-image:${u.foto?`url(${u.foto})`:'none'}">${u.foto?'':(u.avatar||iniciais(u.nome,u.usuario))}</span><div><strong>${u.nome||u.usuario}</strong><small>${u.usuario} • ${u.cargo||'Operador'}</small></div></div>${u.usuario==='admin'?'<small>fixo</small>':`<button class="btn-red btn-small" onclick="removerUsuarioAdmin('${u.usuario}')">Excluir</button>`}</div>`).join('')}
+async function removerUsuarioAdmin(login){const h=await hashSenha(adminSenhaCriar.value);const adminOk=usuarios.find(u=>u.cargo==='Admin'&&u.senha===h);if(!adminOk){alert('Senha do admin incorreta.');return}if(login==='admin'){alert('O admin principal não pode ser excluído.');return}if(!confirm('Excluir usuário '+login+'?'))return;usuarios=usuarios.filter(u=>u.usuario!==login);salvarUsuarios();toastMsg('Usuário excluído.')}
+async function criarUsuarioAdmin(){
+  let senhaAdminDigitada=adminSenhaCriar.value.trim();
+  let nome=novoNome.value.trim();let login=novoLogin.value.trim().toLowerCase();let senhaDigitada=novaSenha.value.trim();let cargo=novoCargo.value;
+  const senhaAdminHash=await hashSenha(senhaAdminDigitada);
+  const adminOk=usuarios.find(u=>u.cargo==='Admin'&&u.senha===senhaAdminHash);
+  if(!adminOk){alert('Senha do admin incorreta.');return}
+  if(!nome||!login||!senhaDigitada){alert('Preencha nome, login e senha.');return}
+  if(usuarios.some(u=>u.usuario===login)){alert('Esse login já existe.');return}
+  let foto=previewNovoUsuario.dataset.foto||await fotoParaBase64(novaFoto);
+  let senhaHash=await hashSenha(senhaDigitada);
+  let novo={usuario:login,senha:senhaHash,nome,cargo,avatar:iniciais(nome,login),foto};
+  usuarios.push(novo);salvarUsuarios();registrarHistorico('Criou usuário',`Usuário ${login} criado como ${cargo}`);
+  novoNome.value='';novoLogin.value='';novaSenha.value='';novaFoto.value='';
+  previewNovoUsuario.dataset.foto='';previewNovoUsuario.style.backgroundImage='';previewNovoUsuario.innerText='?';
+  toastMsg('Usuário criado com sucesso.')
+}
+
+function renderAtividadeAoVivo(){if(!document.getElementById('atividadeAoVivo'))return;atividadeAoVivo.innerHTML=historico.slice(0,8).map(h=>`<div class="activity-item"><span class="activity-dot"></span><div><strong>${h.acao}</strong><span>${h.usuario} • ${h.data}<br>${h.detalhes||''}</span></div></div>`).join('')||'<p class="muted">Nenhuma atividade ainda.</p>'}
+function arrastarAnexos(e){e.preventDefault();dropZoneAnexos.classList.add('dragover')}
+function sairArrastarAnexos(e){e.preventDefault();dropZoneAnexos.classList.remove('dragover')}
+function soltarAnexos(e){e.preventDefault();dropZoneAnexos.classList.remove('dragover');anexosArrastados=[...e.dataTransfer.files].slice(0,2);atualizarTextoAnexos();toastMsg('Anexo(s) arrastado(s) com sucesso.')}
+function atualizarTextoAnexos(){let nomes=[...anexosArrastados.map(f=>f.name)];if(preDoc1.files[0])nomes.push(preDoc1.files[0].name);if(preDoc2.files[0])nomes.push(preDoc2.files[0].name);nomes=[...new Set(nomes)].slice(0,2);dropFilesTexto.innerText=nomes.length?nomes.join(' • '):'Nenhum arquivo selecionado.'}
+
+
+function alternarTema(){document.body.classList.toggle('dark');let escuro=document.body.classList.contains('dark');localStorage.setItem('temaPainel',escuro?'escuro':'claro');botaoTema.innerText=escuro?'☀️ Modo claro':'🌙 Modo escuro'}
+function atualizarBotaoTema(){botaoTema.innerText=document.body.classList.contains('dark')?'☀️ Modo claro':'🌙 Modo escuro'}
+
+function mudarAba(aba){
+abaLancadas.classList.toggle('active',aba==='lancadas');abaALancar.classList.toggle('active',aba==='alancar');abaHistorico.classList.toggle('active',aba==='historico');abaRelatorios.classList.toggle('active',aba==='relatorios');abaBackup.classList.toggle('active',aba==='backup')
+tabLancadas.classList.toggle('active',aba==='lancadas');tabALancar.classList.toggle('active',aba==='alancar');tabHistorico.classList.toggle('active',aba==='historico');tabRelatorios.classList.toggle('active',aba==='relatorios');tabBackup.classList.toggle('active',aba==='backup')
+render()
+if(aba==='relatorios')setTimeout(renderRelatorios,50)
+if(aba==='backup')setTimeout(verificarArmazenamento,50)
+}
+
+function calcular(){
+let pesoNum=Number(String(peso.value).replaceAll('.','').replace(',','.'));let cd=chegadaData.value,ch=chegadaHora.value,sd=saidaData.value,sh=saidaHora.value
+if(!pesoNum||!cd||!ch||!sd||!sh){horasPreview.innerText='0,00 h';valorPreview.innerText='R$ 0,00';return null}
+let chegada=new Date(cd+'T'+ch),saida=new Date(sd+'T'+sh)
+if(saida<=chegada){horasPreview.innerText='Data inválida';valorPreview.innerText='R$ 0,00';return null}
+let horas=((saida-chegada)/3600000)-12;if(horas<0)horas=0
+let toneladas=pesoNum>1000?pesoNum/1000:pesoNum;let valor=toneladas*0.80*horas
+horasPreview.innerText=horas.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+' h';valorPreview.innerText=numeroBR(valor)
+return {horas:horas.toFixed(2),valor:numeroBR(valor),chegada:formatarData(cd,ch),saida:formatarData(sd,sh)}
+}
+
+function autoSalvarFormulario(){
+let dados={chamado:chamado.value,motorista:motorista.value,telefoneMotorista:telefoneMotorista.value,transportadora:transportadora.value,prioridade:prioridade.value,pagoPor:pagoPor.value,placa:placa.value,peso:peso.value,chegadaData:chegadaData.value,chegadaHora:chegadaHora.value,saidaData:saidaData.value,saidaHora:saidaHora.value}
+localStorage.setItem('rascunhoEstadia',JSON.stringify(dados))
+}
+function carregarRascunho(){
+let dados=JSON.parse(localStorage.getItem('rascunhoEstadia')||'null');if(!dados)return
+Object.keys(dados).forEach(k=>{if($(k))$(k).value=dados[k]})
+calcular()
+}
+
+function adicionar(){
+let calc=calcular()
+if(!calc){alert('Preencha peso, chegada e saída corretamente.');return}
+if(!motorista.value.trim()||!placa.value.trim()){alert('Preencha motorista e placa.');return}
+let item={id:Date.now(),chamado:chamado.value.trim(),motorista:motorista.value.trim(),telefoneMotorista:telefoneMotorista.value.trim(),transportadora:transportadora.value.trim(),prioridade:prioridade.value,pagoPor:pagoPor.value,placa:placa.value.trim().toUpperCase(),peso:peso.value.trim(),horas:calc.horas,valor:calc.valor,chegada:calc.chegada,saida:calc.saida,status:'Aberto',lancadoPor:usuarioAtual,dataLancamento:new Date().toLocaleString('pt-BR'),feitoPor:'',dataFeito:'',finalizadoPor:'',dataFinalizado:''}
+estadias.unshift(item);localStorage.removeItem('rascunhoEstadia');registrarHistorico('Adicionou estadia lançada',`Placa ${item.placa} | ${item.valor}`);salvar();render();limparFormulario();tocarSomModerno(prioridade.value==='Urgente'?'urgente':'salvar');toastMsg('Estadia lançada salva.')
+}
+function limparFormulario(){[chamado,motorista,telefoneMotorista,transportadora,placa,peso,chegadaData,chegadaHora,saidaData,saidaHora].forEach(i=>i.value='');prioridade.value='Normal';if(typeof pagoPor!=='undefined')pagoPor.value='Logística';calcular()}
+function marcarFeito(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Feito',feitoPor:usuarioAtual,dataFeito:new Date().toLocaleString('pt-BR')}:e);registrarHistorico('Marcou como feito',`Placa ${e?.placa||'-'}`);salvar();render()}
+function reabrir(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Aberto',feitoPor:'',dataFeito:'',finalizadoPor:'',dataFinalizado:''}:e);registrarHistorico('Reabriu estadia',`Placa ${e?.placa||'-'}`);salvar();render()}
+function finalizar(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Finalizado',finalizadoPor:usuarioAtual,dataFinalizado:new Date().toLocaleString('pt-BR')}:e);registrarHistorico('Finalizou estadia',`Placa ${e?.placa||'-'}`);tocarSomModerno('finalizar');salvar();render()}
+function mandarMsgMotorista(id){let e=estadias.find(x=>x.id===id);if(!e)return;if(!e.telefoneMotorista){alert('Essa estadia não tem WhatsApp do motorista cadastrado.');return}let numero=String(e.telefoneMotorista).replace(/[^0-9]/g,'');if(!numero.startsWith('55'))numero='55'+numero;let msg=`Olá ${e.motorista||''}, sua estadia da placa ${e.placa||''}${e.chamado?' do chamado '+e.chamado:''} já foi lançada. Valor: ${e.valor||''}.`;window.open('https://wa.me/'+numero+'?text='+encodeURIComponent(msg),'_blank')}
+function excluir(id){let e=estadias.find(x=>x.id===id);if(!confirm('Excluir esta estadia?'))return;estadias=estadias.filter(e=>e.id!==id);registrarHistorico('Excluiu estadia lançada',`Placa ${e?.placa||'-'}`);salvar();render()}
+function limparFiltros(){pesquisa.value='';filtroStatus.value='';filtroUsuario.value='';filtroDataInicio.value='';filtroDataFim.value='';render()}
+
+const MAX_ANEXO_BYTES = 600*1024; // 600KB por arquivo
+function arquivoParaBase64(file){return new Promise((resolve,reject)=>{
+  if(!file){resolve(null);return}
+  if(file.size>MAX_ANEXO_BYTES){
+    alert(`⚠️ Arquivo muito grande!\n"${file.name}" tem ${(file.size/1024).toFixed(0)}KB.\nLimite: 600KB por arquivo.\n\nComprima o PDF ou reduza a imagem antes de anexar.`);
+    resolve(null);return;
+  }
+  let reader=new FileReader();
+  reader.onload=()=>resolve({nome:file.name,tipo:file.type,tamanho:file.size,dados:reader.result});
+  reader.onerror=reject;
+  reader.readAsDataURL(file);
+})}
+async function adicionarALancar(){
+if(!prePlaca.value.trim()){alert('Preencha a placa.');return}
+let arquivosBase=anexosArrastados.length?anexosArrastados:[preDoc1.files[0],preDoc2.files[0]].filter(Boolean);let anexos=[];for(let arq of arquivosBase.slice(0,2)){anexos.push(await arquivoParaBase64(arq))}
+if(anexos.length===0){alert('Anexe pelo menos um documento.');return}
+let item={id:Date.now(),placa:prePlaca.value.trim().toUpperCase(),transportadora:preTransportadora.value.trim(),prioridade:prePrioridade.value,obs:preObs.value.trim(),anexos,status:'A lançar',criadoPor:usuarioAtual,dataCriacao:new Date().toLocaleString('pt-BR')}
+estadiasALancar.unshift(item);registrarHistorico('Adicionou estadia a lançar',`Placa ${item.placa} | Prioridade ${item.prioridade}`);salvar();render();[prePlaca,preTransportadora,preDoc1,preDoc2,preObs].forEach(i=>i.value='');prePrioridade.value='Normal';anexosArrastados=[];atualizarTextoAnexos();tocarSomModerno(item.prioridade==='Urgente'?'urgente':'salvar');notificarNavegador('Nova estadia a lançar',`Placa ${item.placa}`)
+}
+async function adicionarAnexoPre(id){let input=document.createElement('input');input.type='file';input.accept='.pdf,.png,.jpg,.jpeg,.webp,.doc,.docx,.xls,.xlsx';input.onchange=async()=>{let arq=await arquivoParaBase64(input.files[0]);if(!arq)return;estadiasALancar=estadiasALancar.map(e=>e.id===id?{...e,anexos:[...(e.anexos||[]),arq].slice(0,2)}:e);registrarHistorico('Adicionou anexo','Adicionou anexo em estadia a lançar');salvar();render()};input.click()}
+function abrirParaLancar(id){let e=estadiasALancar.find(x=>x.id===id);if(!e)return;mudarAba('lancadas');placa.value=e.placa||'';transportadora.value=e.transportadora||'';prioridade.value=e.prioridade||'Normal';if(typeof pagoPor!=='undefined')pagoPor.value=e.pagoPor||'Logística';estadiasALancar=estadiasALancar.filter(x=>x.id!==id);registrarHistorico('Abriu para lançar',`Placa ${e.placa}`);salvar();render();autoSalvarFormulario();alert('A placa foi aberta na aba de lançamento. Agora preencha os dados, chegada e saída para calcular e salvar.')}
+function excluirPre(id){let e=estadiasALancar.find(x=>x.id===id);if(!confirm('Excluir esta estadia a lançar?'))return;estadiasALancar=estadiasALancar.filter(e=>e.id!==id);registrarHistorico('Excluiu estadia a lançar',`Placa ${e?.placa||'-'}`);salvar();render()}
+function limparFiltrosPre(){pesquisaPre.value='';filtroPreUsuario.value='';filtroPreStatus.value='';filtroPrePrioridade.value='';render()}
+
+function abrirNotificacoes(){caixaNotificacoes.classList.toggle('show')}
+function irParaALancar(){caixaNotificacoes.classList.remove('show');mudarAba('alancar')}
+
+let somAtivo=false;let audioCtx=null;let ultimaQtdALancar=estadiasALancar.length
+function criarAudio(){if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+function tocarSomModerno(tipo='notificacao'){
+  if(!somAtivo && tipo!=='teste')return;
+  try{
+    let ctx=criarAudio();
+    let agora=ctx.currentTime;
+    let master=ctx.createGain();
+    master.gain.setValueAtTime(0.0001,agora);
+    master.gain.exponentialRampToValueAtTime(0.22,agora+0.03);
+    master.gain.exponentialRampToValueAtTime(0.0001,agora+0.75);
+    master.connect(ctx.destination);
+    let sequencias={
+      salvar:[660,880,1320],
+      urgente:[880,660,880,1175],
+      finalizar:[523,659,784,1046],
+      notificacao:[740,988],
+      teste:[660,880,1320]
+    };
+    let notas=sequencias[tipo]||sequencias.notificacao;
+    notas.forEach((freq,i)=>{
+      let osc=ctx.createOscillator();
+      let gain=ctx.createGain();
+      osc.type=tipo==='urgente'?'square':'sine';
+      osc.frequency.setValueAtTime(freq,agora+i*0.12);
+      gain.gain.setValueAtTime(0.0001,agora+i*0.12);
+      gain.gain.exponentialRampToValueAtTime(tipo==='urgente'?0.16:0.11,agora+i*0.12+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,agora+i*0.12+0.11);
+      osc.connect(gain);gain.connect(master);
+      osc.start(agora+i*0.12);osc.stop(agora+i*0.12+0.13);
+    });
+    botaoSom.classList.add('sound-pulse');setTimeout(()=>botaoSom.classList.remove('sound-pulse'),400);
+  }catch(e){console.log('Som bloqueado pelo navegador',e)}
+}
+function tocarBipNotificacao(){tocarSomModerno('notificacao')}
+function ativarSomNotificacao(){somAtivo=true;criarAudio();botaoSom.innerText='🔊 Sons modernos';botaoSom.classList.remove('btn-light');botaoSom.classList.add('btn-green');tocarSomModerno('teste');pedirPermissaoNotificacao()}
+function pedirPermissaoNotificacao(){if('Notification' in window && Notification.permission==='default'){Notification.requestPermission()}}
+function notificarNavegador(titulo,texto){tocarSomModerno('notificacao');if('Notification' in window && Notification.permission==='granted'){new Notification(titulo,{body:texto})}}
+function verificarSomNovaEstadia(qtd){if(qtd>ultimaQtdALancar){notificarNavegador('Estadia pendente','Existe nova estadia a lançar.')}ultimaQtdALancar=qtd}
+function renderNotificacoes(){let qtd=estadiasALancar.length;verificarSomNovaEstadia(qtd);contadorSino.innerText=qtd;botaoSino.classList.toggle('alerta',qtd>0);textoNotificacao.innerText=qtd>0?`Você tem ${qtd} estadia(s) aguardando lançamento.`:'Nenhuma estadia pendente.';listaNotificacoes.innerHTML=qtd?estadiasALancar.slice(0,5).map(e=>`<div class="notif-item"><strong>Placa ${e.placa||'-'} • ${e.prioridade||'Normal'}</strong><span>${e.transportadora||'Sem transportadora'}<br>Criado por ${e.criadoPor||'-'} em ${e.dataCriacao||'-'}</span></div>`).join(''):''}
+
+function atualizarSelect(select,nomes){let atual=select.value;select.innerHTML='<option value="">Todos usuários</option>'+nomes.map(n=>`<option value="${n}">${n}</option>`).join('');select.value=atual}
+function render(){
+atualizarBotaoTema()
+let nomes=[...new Set(estadias.map(e=>e.lancadoPor).filter(Boolean))].sort();atualizarSelect(filtroUsuario,nomes)
+let nomesPre=[...new Set(estadiasALancar.map(e=>e.criadoPor).filter(Boolean))].sort();atualizarSelect(filtroPreUsuario,nomesPre)
+let b=(pesquisa.value||'').toUpperCase().trim(),fs=filtroStatus.value,fu=filtroUsuario.value,di=filtroDataInicio.value,df=filtroDataFim.value
+let lista=estadias.filter(e=>{let texto=((e.placa||'')+' '+(e.motorista||'')+' '+(e.chamado||'')+' '+(e.transportadora||'')).toUpperCase();let data=dataLancamentoISO(e);return(!b||texto.includes(b))&&(!fs||e.status===fs)&&(!fu||e.lancadoPor===fu)&&(!di||data>=di)&&(!df||data<=df)})
+totalQtd.innerText=lista.length;totalValor.innerText=numeroBR(lista.reduce((s,e)=>s+moedaParaNumero(e.valor),0));totalAbertas.innerText=lista.filter(e=>e.status==='Aberto').length;totalFeitas.innerText=lista.filter(e=>e.status==='Feito'||e.status==='Finalizado').length;totalALancar.innerText=estadiasALancar.length;totalUrgentes.innerText=estadiasALancar.filter(e=>e.prioridade==='Urgente').length
+renderNotificacoes()
+tabela.innerHTML=lista.length?lista.map(e=>`<tr class="${e.status==='Finalizado'?'linha-finalizada':''}"><td><strong>${e.chamado||'-'}</strong></td><td>${e.motorista||'-'}<br><span class="muted">Chegada: ${e.chegada||'-'}<br>Saída: ${e.saida||'-'}</span></td><td>${e.transportadora||'-'}</td><td><span class="plate">${e.placa||'-'}</span></td><td>${e.peso||'-'}</td><td><strong>${e.horas||'0.00'} h</strong></td><td><strong>${e.valor||'R$ 0,00'}</strong></td><td>${badgePagoPor(e.pagoPor)}</td><td><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></td><td>${e.lancadoPor||'-'}</td><td><strong>${(e.dataLancamento||'-').split(',')[0]}</strong><br><span class="muted">${(e.dataLancamento||'').split(',')[1]||''}</span></td><td>${e.telefoneMotorista?`<a class="wa-link" href="https://wa.me/${String(e.telefoneMotorista).replace(/[^0-9]/g,'').startsWith('55')?String(e.telefoneMotorista).replace(/[^0-9]/g,''):'55'+String(e.telefoneMotorista).replace(/[^0-9]/g,'')}" target="_blank">WhatsApp</a>`:'-'}</td><td>${e.status==='Aberto'?timerHtml(e.dataLancamento,'pendente a sair'):'-'}</td><td><span class="status ${e.status==='Finalizado'?'status-finalizado':e.status==='Feito'?'status-feito':'status-aberto'}">${e.status}</span>${e.feitoPor?`<br><span class="muted">Feito por ${e.feitoPor}<br>${e.dataFeito}</span>`:''}${e.finalizadoPor?`<br><span class="muted">Finalizado por ${e.finalizadoPor}<br>${e.dataFinalizado}</span>`:''}</td><td><div class="actions">${e.status==='Finalizado'?`<button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:e.status==='Feito'?`<button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button><button class="btn-purple btn-small" onclick="finalizar(${e.id})">Finalizar</button><button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:`<button class="btn-green btn-small" onclick="marcarFeito(${e.id})">👍 Feito</button><button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button>`}<button class="btn-red btn-small" onclick="excluir(${e.id})">Excluir</button></div></td></tr>`).join(''):`<tr><td colspan="14" class="empty">Nenhuma estadia encontrada.</td></tr>`
+
+let bp=(pesquisaPre.value||'').toUpperCase().trim(),fpu=filtroPreUsuario.value,fpp=filtroPrePrioridade.value
+let listaPre=estadiasALancar.filter(e=>{let texto=((e.placa||'')+' '+(e.transportadora||'')).toUpperCase();return(!bp||texto.includes(bp))&&(!fpu||e.criadoPor===fpu)&&(!fpp||e.prioridade===fpp)})
+tabelaPre.innerHTML=listaPre.length?listaPre.map(e=>{let anexosHtml=(e.anexos||[]).length?(e.anexos||[]).map((a,idx)=>{if(typeof a==='string')return `<div class="anexo-item">📎 ${a}</div>`;return `<div class="anexo-item"><span>📎 ${a.nome||('Documento '+(idx+1))}</span><span><a class="anexo-link" href="${a.dados}" download="${a.nome||'documento'}" target="_blank">Baixar</a> • <a class="anexo-link" href="#" onclick="abrirPreviewAnexo(${e.id},${idx});return false">Preview</a></span></div>`}).join(''):'-';return `<tr><td><span class="plate">${e.placa||'-'}</span></td><td>${e.transportadora||'-'}</td><td><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></td><td>${anexosHtml}${(e.anexos||[]).length<2?`<button class="btn-light btn-small" onclick="adicionarAnexoPre(${e.id})">+ anexo</button>`:''}</td><td>${e.obs||'-'}</td><td>${e.criadoPor||'-'}<br><span class="muted">${e.dataCriacao||''}</span></td><td>${timerHtml(e.dataCriacao,'pendente a lançar')}</td><td><span class="status status-lancar">A lançar</span></td><td><div class="actions"><button class="btn-green btn-small" onclick="abrirParaLancar(${e.id})">Lançar</button><button class="btn-red btn-small" onclick="excluirPre(${e.id})">Excluir</button></div></td></tr>`}).join(''):`<tr><td colspan="9" class="empty">Nenhuma estadia a lançar.</td></tr>`
+
+renderMobileCards(lista,listaPre)
+tabelaHistorico.innerHTML=historico.length?historico.map(h=>`<tr><td>${h.data}</td><td>${h.usuario}</td><td><strong>${h.acao}</strong></td><td>${h.detalhes}</td></tr>`).join(''):`<tr><td colspan="4" class="empty">Nenhum histórico ainda.</td></tr>`
+renderAtividadeAoVivo()
+if(abaRelatorios.classList.contains('active'))renderRelatorios()
+}
+
+
+function renderMobileCards(lista,listaPre){
+  cardsLancadas.innerHTML=lista.length?lista.map(e=>`<div class="mobile-card"><strong>${e.placa||'-'} • ${e.valor||'R$ 0,00'}</strong><span class="muted">${e.motorista||'-'} • ${e.transportadora||'-'}</span><div class="row"><span>Status</span><span class="status ${e.status==='Finalizado'?'status-finalizado':e.status==='Feito'?'status-feito':'status-aberto'}">${e.status}</span></div><div class="row"><span>Prioridade</span><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></div>${e.status==='Aberto'?`<div class="row"><span>Pendente a sair</span>${timerHtml(e.dataLancamento,'')}</div>`:''}<div class="actions" style="margin-top:10px">${e.status==='Feito'?`<button class="btn-purple btn-small" onclick="finalizar(${e.id})">Finalizar</button>`:`<button class="btn-green btn-small" onclick="marcarFeito(${e.id})">Feito</button>`}<button class="btn-red btn-small" onclick="excluir(${e.id})">Excluir</button></div></div>`).join(''):`<div class="mobile-card empty">Nenhuma estadia encontrada.</div>`
+  cardsPre.innerHTML=listaPre.length?listaPre.map(e=>`<div class="mobile-card"><strong>${e.placa||'-'} • A lançar</strong><span class="muted">${e.transportadora||'-'} • ${e.criadoPor||'-'}</span><div class="row"><span>Prioridade</span><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></div><div class="row"><span>Pendente a lançar</span>${timerHtml(e.dataCriacao,'')}</div><p>${e.obs||''}</p><div class="actions" style="margin-top:10px"><button class="btn-green btn-small" onclick="abrirParaLancar(${e.id})">Lançar</button><button class="btn-red btn-small" onclick="excluirPre(${e.id})">Excluir</button></div></div>`).join(''):`<div class="mobile-card empty">Nenhuma estadia a lançar.</div>`
+}
+function abrirPreviewAnexo(id,idx){let e=estadiasALancar.find(x=>x.id===id);let a=e&&(e.anexos||[])[idx];if(!a||typeof a==='string'){alert('Preview indisponível para esse anexo.');return}previewTitulo.innerText=a.nome||'Documento';let tipo=a.tipo||'';if(tipo.startsWith('image/')){previewConteudo.innerHTML=`<img class="preview-img" src="${a.dados}">`}else if(tipo==='application/pdf'){previewConteudo.innerHTML=`<iframe class="preview-frame" src="${a.dados}"></iframe>`}else{previewConteudo.innerHTML=`<p>Preview não disponível para este tipo de arquivo.</p><br><a class="wa-link" href="${a.dados}" download="${a.nome||'documento'}">Baixar arquivo</a>`}modalPreview.classList.add('show')}
+function fecharPreview(){modalPreview.classList.remove('show');previewConteudo.innerHTML=''}
+function agrupar(lista,campo){let obj={};lista.forEach(e=>{let k=e[campo]||'Sem informação';obj[k]=(obj[k]||0)+1});return Object.entries(obj).sort((a,b)=>b[1]-a[1])}
+function desenharBarras(canvasId,dados,titulo){let c=document.getElementById(canvasId);if(!c)return;let ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--text')||'#111';ctx.font='14px Arial';if(!dados.length){ctx.fillText('Sem dados',20,40);return}let max=Math.max(...dados.map(x=>x[1]));let barW=(w-60)/dados.length;dados.forEach((d,i)=>{let bh=(h-70)*(d[1]/max);let x=40+i*barW;let y=h-35-bh;ctx.fillRect(x,y,Math.max(18,barW-12),bh);ctx.fillText(String(d[1]),x,y-6);ctx.save();ctx.translate(x,h-15);ctx.rotate(-0.45);ctx.fillText(String(d[0]).slice(0,12),0,0);ctx.restore()})}
+function renderRelatorios(){let porDia={};estadias.forEach(e=>{let d=(e.dataLancamento||'-').split(',')[0]||'-';porDia[d]=(porDia[d]||0)+moedaParaNumero(e.valor)});let dadosDia=Object.entries(porDia).slice(-10).map(([k,v])=>[k,Math.round(v)]);desenharBarras('graficoValores',dadosDia,'Valores');desenharBarras('graficoStatus',agrupar(estadias,'status'),'Status');rankingUsuarios.innerHTML=agrupar(estadias,'lancadoPor').slice(0,8).map(([n,q])=>`<div class="rank-item"><strong>${n}</strong><span>${q} estadia(s)</span></div>`).join('')||'<p class="muted">Sem dados.</p>';rankingTransportadoras.innerHTML=agrupar(estadias,'transportadora').slice(0,8).map(([n,q])=>`<div class="rank-item"><strong>${n}</strong><span>${q} estadia(s)</span></div>`).join('')||'<p class="muted">Sem dados.</p>'}
+function imprimirRelatorio(){let total=numeroBR(estadias.reduce((s,e)=>s+moedaParaNumero(e.valor),0));let html=`<html><head><title>Relatório LDC</title><style>body{font-family:Arial;padding:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#111827;color:white}
+.badge-logistica{background:#dbeafe;color:#1d4ed8;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;display:inline-block}
+.badge-transportes{background:#ede9fe;color:#6d28d9;padding:7px 10px;border-radius:999px;font-size:12px;font-weight:900;display:inline-block}
+.sound-pulse{animation:soundPulse .35s ease}@keyframes soundPulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+
+</style></head><body><h1>Relatório de Estadias LDC</h1><p>Total: ${estadias.length} | Valor: ${total} | A lançar: ${estadiasALancar.length}</p><table><thead><tr><th>Chamado</th><th>Motorista</th><th>Placa</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead><tbody>${estadias.map(e=>`<tr><td>${e.chamado||'-'}</td><td>${e.motorista||'-'}</td><td>${e.placa||'-'}</td><td>${e.valor||'-'}</td><td>${e.status||'-'}</td><td>${e.dataLancamento||'-'}</td></tr>`).join('')}</tbody></table><script>window.print()<\/script></body></html>`;let w=window.open('','_blank');w.document.write(html);w.document.close()}
+
+function limparHistorico(){if(!confirm('Limpar histórico?'))return;historico=[];salvar();render()}
+function baixarArquivo(nome,conteudo,tipo){let blob=new Blob([conteudo],{type:tipo});let url=URL.createObjectURL(blob);let a=document.createElement('a');a.href=url;a.download=nome;a.click();URL.revokeObjectURL(url)}
+function exportarBackup(){let dados={estadias,estadiasALancar,historico,usuarios,exportadoEm:new Date().toLocaleString('pt-BR')};baixarArquivo('backup-painel-ldc.json',JSON.stringify(dados,null,2),'application/json');registrarHistorico('Exportou backup','Backup JSON gerado')}
+function importarBackup(){let file=importBackup.files[0];if(!file){alert('Selecione um arquivo JSON.');return}let reader=new FileReader();reader.onload=()=>{try{let dados=JSON.parse(reader.result);estadias=dados.estadias||[];estadiasALancar=dados.estadiasALancar||[];historico=dados.historico||[];usuarios=dados.usuarios||usuarios;registrarHistorico('Importou backup','Backup JSON importado');salvar();render();toastMsg('Backup importado com sucesso.')}catch(e){alert('Arquivo inválido.')}};reader.readAsText(file)}
+function exportarCSV(){let linhas=[['Chamado','Motorista','Transportadora','Placa','Peso','Horas','Valor','Pago por','Prioridade','Status','Lançado por','Data lançamento'].join(';')];estadias.forEach(e=>linhas.push([e.chamado,e.motorista,e.transportadora,e.placa,e.peso,e.horas,e.valor,e.pagoPor||'Logística',e.prioridade,e.status,e.lancadoPor,e.dataLancamento].map(x=>`"${String(x||'').replaceAll('"','""')}"`).join(';')));baixarArquivo('estadias-ldc.csv',linhas.join('\n'),'text/csv;charset=utf-8');registrarHistorico('Exportou CSV','Planilha CSV gerada')}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&login.style.display!=='none'&&!areaAdminLogin.open)entrar();if(e.key==='Escape')caixaNotificacoes.classList.remove('show')})
+setInterval(()=>{if(painel.style.display==='block')render()},60000)
+renderUsuariosLogin()
+migrarSenhas()
+
+// ── Sync entre abas (mesmo navegador) ──────────────────────────────────────
+const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('ldc-painel-sync') : null
+function emitirSync(){if(syncChannel)syncChannel.postMessage({tipo:'dados-atualizados',de:Date.now()})}
+if(syncChannel){
+  syncChannel.onmessage = (e) => {
+    if(e.data?.tipo==='dados-atualizados'){
+      estadias        = JSON.parse(localStorage.getItem('estadias'))||[]
+      estadiasALancar = JSON.parse(localStorage.getItem('estadiasALancar'))||[]
+      historico       = JSON.parse(localStorage.getItem('historicoEstadias'))||[]
+      if(document.getElementById('painel').style.display==='block') render()
+      toastMsg('🔄 Dados atualizados por outra aba.')
+    }
+  }
+}
+
+// ── Aviso de backup a cada 3 dias ──────────────────────────────────────────
+function verificarLembreteBackup(){
+  const ultima = Number(localStorage.getItem('ultimoBackupLDC')||0)
+  const diasSemBackup = (Date.now()-ultima)/(1000*60*60*24)
+  if(diasSemBackup>=3 || ultima===0){
+    const banner = document.getElementById('bannerBackup')
+    if(banner) banner.style.display='flex'
+  }
+}
+function dispensarBanner(){
+  localStorage.setItem('ultimoBackupLDC', Date.now())
+  const b=document.getElementById('bannerBackup')
+  if(b)b.style.display='none'
+}
+function exportarBackupEDispensar(){exportarBackup();dispensarBanner()}
+setTimeout(verificarLembreteBackup, 2000)
+</script>
+</body>
+</html>
