@@ -93,6 +93,27 @@ body.dark .anexo-item{background:#1f2937;border-color:#374151;color:#e5e7eb}
 .login{position:relative;overflow:hidden}
 .login:before{content:"";position:absolute;inset:-120px;background:radial-gradient(circle at 20% 20%,rgba(37,99,235,.22),transparent 28%),radial-gradient(circle at 80% 10%,rgba(124,58,237,.20),transparent 30%),radial-gradient(circle at 55% 90%,rgba(22,163,74,.14),transparent 30%);animation:floatBg 9s ease-in-out infinite alternate}
 @keyframes floatBg{from{transform:translate3d(-12px,-8px,0) scale(1)}to{transform:translate3d(12px,8px,0) scale(1.04)}}
+.filial-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px}
+.filial-item.inativa{opacity:.5}
+.filial-badge{background:#dbeafe;color:#1d4ed8;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.filial-badge.inativa{background:#f3f4f6;color:#6b7280}
+.resumo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:18px}
+.resumo-card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:var(--shadow)}
+.resumo-card span{font-size:11px;color:var(--muted);font-weight:800;text-transform:uppercase}
+.resumo-card strong{display:block;font-size:20px;margin-top:6px}
+.resumo-card small{font-size:12px;color:var(--muted)}
+.anexo-preview-wrap{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.anexo-thumb{width:72px;height:72px;border-radius:10px;object-fit:cover;border:1px solid var(--line);cursor:pointer}
+.anexo-pdf-icon{width:72px;height:72px;border-radius:10px;background:#fee2e2;border:1px solid #fca5a5;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:#dc2626;font-weight:900;cursor:pointer;text-decoration:none}
+.upload-progress{background:#e5e7eb;border-radius:999px;height:6px;overflow:hidden;margin-top:6px}
+.upload-progress-bar{background:var(--blue);height:100%;border-radius:999px;transition:width .3s}
+.field-error{border-color:#dc2626!important;box-shadow:0 0 0 3px rgba(220,38,38,.12)!important}
+.error-msg{color:#dc2626;font-size:12px;font-weight:700;margin-top:4px;display:none}
+.error-msg.show{display:block}
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;align-items:center;justify-content:center}
+.loading-overlay.show{display:flex}
+.loading-spinner{width:48px;height:48px;border:5px solid rgba(255,255,255,.2);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .login-card{position:relative;z-index:1;backdrop-filter:blur(10px)}
 .login-hero{margin-bottom:18px;padding:14px;border-radius:20px;background:linear-gradient(135deg,#111827,#2563eb);color:white;box-shadow:0 18px 45px rgba(37,99,235,.22)}
 .login-hero p{color:#dbeafe}.login-badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.login-badges span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 9px;font-size:12px;font-weight:800}.login-footer{margin-top:18px;text-align:center;font-size:12px;color:var(--muted);font-weight:900}.admin-login-box{margin-top:14px;border:1px solid var(--line);border-radius:20px;padding:12px;background:#f8fafc}.dark .admin-login-box{background:#1f2937}.admin-login-box summary{cursor:pointer;font-weight:900;font-size:13px;color:var(--text);list-style:none}.admin-login-box summary::-webkit-details-marker{display:none}.admin-login-grid{display:grid;gap:9px;margin-top:10px}.foto-preview{width:54px;height:54px;border-radius:999px;background:linear-gradient(135deg,#2563eb,#7c3aed);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;border:2px solid rgba(255,255,255,.75);background-size:cover;background-position:center}.usuario-admin-item{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px;margin-top:7px}.usuario-admin-item small{color:var(--muted);display:block}.avatar.foto{background-size:cover;background-position:center;color:transparent}
@@ -120,6 +141,8 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
 .sound-pulse{animation:soundPulse .35s ease}@keyframes soundPulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
 
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="login" id="login">
@@ -216,6 +239,7 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
       <button id="tabALancar" class="tab" onclick="mudarAba('alancar')">Estadias a lançar</button>
       <button id="tabHistorico" class="tab" onclick="mudarAba('historico')">Histórico</button>
       <button id="tabRelatorios" class="tab" onclick="mudarAba('relatorios')">Relatórios</button>
+      <button id="tabFiliais" class="tab" onclick="mudarAba('filiais')">Filiais</button>
       <button id="tabBackup" class="tab" onclick="mudarAba('backup')">Backup</button>
     </div>
 
@@ -232,6 +256,7 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
           <div class="field"><label>Transportadora</label><input id="transportadora" placeholder="Ex: LDC / Terceiro" oninput="autoSalvarFormulario()"></div>
           <div class="field"><label>Prioridade</label><select id="prioridade" onchange="autoSalvarFormulario()"><option value="Normal">Normal</option><option value="Média">Média</option><option value="Urgente">Urgente</option></select></div>
           <div class="field"><label>Pago por</label><select id="pagoPor" onchange="autoSalvarFormulario()"><option value="Logística">Pago por Logística</option><option value="Transportes">Pago por Transportes</option></select></div>
+          <div class="field"><label>Filial <span style="color:var(--red)">*</span></label><select id="filialId" onchange="autoSalvarFormulario()"><option value="">Selecione a filial...</option></select><div class="error-msg" id="erroFilial">Selecione a filial.</div></div>
           <div class="field"><label>Placa</label><input id="placa" placeholder="Ex: JBU0H16" oninput="this.value=this.value.toUpperCase();autoSalvarFormulario()"></div>
           <div class="field"><label>Peso</label><input id="peso" placeholder="Ex: 38380" oninput="calcular();autoSalvarFormulario()"></div>
           <div class="field"><label>Data chegada</label><input id="chegadaData" type="date" onchange="calcular();autoSalvarFormulario()"></div>
@@ -257,12 +282,13 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
           <select id="filtroUsuario" onchange="render()"><option value="">Todos usuários</option></select>
           <input id="filtroDataInicio" type="date" onchange="render()">
           <input id="filtroDataFim" type="date" onchange="render()">
+          <select id="filtroFilial" onchange="render()"><option value="">Todas as filiais</option></select>
         </div>
       </div>
 
       <div class="table-wrap mobile-hide">
         <table>
-          <thead><tr><th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Placa</th><th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th><th>Prioridade</th><th>Lançado por</th><th>Dia lançado</th><th>WhatsApp</th><th>Tempo pendente a sair</th><th>Status</th><th>Ações</th></tr></thead>
+          <thead><tr><th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Filial</th><th>Placa</th><th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th><th>Prioridade</th><th>Lançado por</th><th>Dia lançado</th><th>WhatsApp</th><th>Tempo pendente a sair</th><th>Status</th><th>Ações</th></tr></thead>
           <tbody id="tabela"></tbody>
         </table>
       </div>
@@ -350,6 +376,21 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
       </div>
     </div>
 
+    <div id="abaFiliais" class="aba">
+      <div id="resumoFiliais" class="resumo-grid"></div>
+      <div class="box">
+        <div class="box-title">
+          <h2>Cadastro de Filiais</h2>
+          <span class="muted">Gerencie as filiais do sistema.</span>
+        </div>
+        <div class="form-grid" style="grid-template-columns:1fr auto;gap:12px;margin-bottom:12px">
+          <input id="novaFilialNome" placeholder="Nome da filial (ex: Jataí)">
+          <button class="btn-green" onclick="adicionarFilial()">+ Adicionar</button>
+        </div>
+        <div id="listaFiliais"></div>
+      </div>
+    </div>
+
     <div id="abaBackup" class="aba">
       <div class="box" style="border-left:4px solid #f59e0b">
         <div style="display:flex;gap:10px;align-items:flex-start">
@@ -368,7 +409,7 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
       <div class="box">
         <div class="box-title"><h2>Backup e exportação</h2><span class="muted">Salve seus dados antes de limpar navegador ou trocar de computador.</span></div>
         <div class="backup-row">
-          <button class="btn-blue" onclick="exportarCSV()">Exportar Excel/CSV</button>
+          <button class="btn-blue" onclick="exportarXLSX()">Exportar Excel (.xlsx)</button>
           <button class="btn-purple" onclick="exportarBackup()">Exportar backup JSON</button>
           <input id="importBackup" type="file" accept=".json">
           <button class="btn-green" onclick="importarBackup()">Importar backup</button>
@@ -379,6 +420,7 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="loading-spinner"></div></div>
 
 <div id="bannerBackup" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:99;background:#1e3a5f;color:white;padding:14px 20px;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.25)">
   <span style="font-size:14px">💾 <strong>Você não exporta um backup há 3 ou mais dias.</strong> Dados ficam apenas neste navegador — exporte para não perder nada.</span>
@@ -398,6 +440,176 @@ body.dark .timer-badge.timer-medio{background:#422006;color:#fde68a}
 </div>
 
 <script>
+// ── Supabase ──────────────────────────────────────────────────────────────────
+const SUPA_URL = 'https://qzjwjylpbmnggczrbgoe.supabase.co'
+const SUPA_KEY = 'sb_publishable_om8iQIEuLHPQpxgXCOqLgw_xOGyCko_'
+let sb = null
+try { sb = supabase.createClient(SUPA_URL, SUPA_KEY) } catch(e) { console.warn('Supabase indisponível',e) }
+
+// ── Filiais ───────────────────────────────────────────────────────────────────
+let filiais = JSON.parse(localStorage.getItem('filiaisLDC') || '[]')
+
+function salvarFiliaisLocal() { localStorage.setItem('filiaisLDC', JSON.stringify(filiais)) }
+
+async function carregarFiliais() {
+  if (!sb) return
+  try {
+    const { data, error } = await sb.from('filiais').select('*').order('nome')
+    if (!error && data) { filiais = data; salvarFiliaisLocal() }
+  } catch(e) { console.warn('Filiais offline', e) }
+  preencherSelectFilial()
+  renderFiliais()
+}
+
+function preencherSelectFilial() {
+  const sel = document.getElementById('filialId')
+  if (!sel) return
+  const atual = sel.value
+  sel.innerHTML = '<option value="">Selecione a filial...</option>' +
+    filiais.filter(f => f.ativo !== false).map(f => `<option value="${f.id}">${f.nome}</option>`).join('')
+  sel.value = atual
+
+  const sf = document.getElementById('filtroFilial')
+  if (sf) {
+    const v = sf.value
+    sf.innerHTML = '<option value="">Todas as filiais</option>' +
+      filiais.map(f => `<option value="${f.id}">${f.nome}</option>`).join('')
+    sf.value = v
+  }
+}
+
+function nomeFiliaPorId(id) {
+  const f = filiais.find(x => String(x.id) === String(id))
+  return f ? f.nome : (id || '-')
+}
+
+function renderFiliais() {
+  const el = document.getElementById('listaFiliais')
+  if (!el) return
+  if (!filiais.length) { el.innerHTML = '<p class="muted empty">Nenhuma filial cadastrada.</p>'; return }
+  el.innerHTML = filiais.map(f => `
+    <div class="filial-item ${f.ativo===false?'inativa':''}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="filial-badge ${f.ativo===false?'inativa':''}">${f.ativo===false?'Inativa':'Ativa'}</span>
+        <strong>${f.nome}</strong>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-light btn-small" onclick="editarFilial(${f.id},'${f.nome.replace(/'/g,"\\'")}')">Editar</button>
+        <button class="btn-${f.ativo===false?'green':'orange'} btn-small" onclick="toggleFilial(${f.id})">${f.ativo===false?'Ativar':'Desativar'}</button>
+      </div>
+    </div>`).join('')
+  renderResumoFiliais()
+}
+
+function renderResumoFiliais() {
+  const el = document.getElementById('resumoFiliais')
+  if (!el) return
+  const cards = filiais.filter(f => f.ativo !== false).map(f => {
+    const lista = estadias.filter(e => String(e.filialId) === String(f.id))
+    const total = lista.reduce((s, e) => s + moedaParaNumero(e.valor), 0)
+    return `<div class="resumo-card">
+      <span>${f.nome}</span>
+      <strong>${lista.length} estadia(s)</strong>
+      <small>${numeroBR(total)}</small>
+    </div>`
+  }).join('')
+  el.innerHTML = cards || '<p class="muted">Sem dados.</p>'
+}
+
+async function adicionarFilial() {
+  const nome = document.getElementById('novaFilialNome').value.trim()
+  if (!nome) { alert('Informe o nome da filial.'); return }
+  if (filiais.find(f => f.nome.toLowerCase() === nome.toLowerCase())) { alert('Filial já existe.'); return }
+  showLoading(true)
+  try {
+    if (sb) {
+      const { data, error } = await sb.from('filiais').insert({ nome, ativo: true }).select().single()
+      if (error) throw error
+      filiais.push(data)
+    } else {
+      filiais.push({ id: Date.now(), nome, ativo: true, created_at: new Date().toISOString() })
+    }
+    salvarFiliaisLocal()
+    document.getElementById('novaFilialNome').value = ''
+    preencherSelectFilial()
+    renderFiliais()
+    registrarHistorico('Criou filial', nome)
+    toastMsg('Filial criada.')
+  } catch(e) { alert('Erro: ' + e.message) }
+  showLoading(false)
+}
+
+async function editarFilial(id, nomeAtual) {
+  const novo = prompt('Novo nome da filial:', nomeAtual)
+  if (!novo || novo.trim() === nomeAtual) return
+  showLoading(true)
+  try {
+    if (sb) {
+      const { error } = await sb.from('filiais').update({ nome: novo.trim() }).eq('id', id)
+      if (error) throw error
+    }
+    filiais = filiais.map(f => f.id === id ? { ...f, nome: novo.trim() } : f)
+    salvarFiliaisLocal(); preencherSelectFilial(); renderFiliais()
+    registrarHistorico('Editou filial', `${nomeAtual} → ${novo.trim()}`)
+    toastMsg('Filial atualizada.')
+  } catch(e) { alert('Erro: ' + e.message) }
+  showLoading(false)
+}
+
+async function toggleFilial(id) {
+  const f = filiais.find(x => x.id === id)
+  if (!f) return
+  const novoAtivo = f.ativo === false
+  showLoading(true)
+  try {
+    if (sb) {
+      const { error } = await sb.from('filiais').update({ ativo: novoAtivo }).eq('id', id)
+      if (error) throw error
+    }
+    filiais = filiais.map(x => x.id === id ? { ...x, ativo: novoAtivo } : x)
+    salvarFiliaisLocal(); preencherSelectFilial(); renderFiliais()
+    toastMsg(`Filial ${novoAtivo ? 'ativada' : 'desativada'}.`)
+  } catch(e) { alert('Erro: ' + e.message) }
+  showLoading(false)
+}
+
+function showLoading(v) {
+  const el = document.getElementById('loadingOverlay')
+  if (el) el.classList.toggle('show', v)
+}
+
+// ── Exportação XLSX melhorada ─────────────────────────────────────────────────
+function exportarXLSX() {
+  if (typeof XLSX === 'undefined') { exportarCSV(); return }
+  const wb = XLSX.utils.book_new()
+  const cabecalho = ['Chamado','Motorista','Transportadora','Filial','Placa','Peso (kg)','Horas válidas','Valor (R$)','Pago por','Prioridade','Status','Lançado por','Data lançamento','Chegada','Saída']
+  const toRow = e => [
+    e.chamado||'', e.motorista||'', e.transportadora||'',
+    nomeFiliaPorId(e.filialId),
+    e.placa||'', e.peso||'', e.horas||'',
+    moedaParaNumero(e.valor),
+    e.pagoPor||'Logística', e.prioridade||'Normal', e.status||'',
+    e.lancadoPor||'', e.dataLancamento||'', e.chegada||'', e.saida||''
+  ]
+  // Aba geral
+  const dadosGeral = [cabecalho, ...estadias.map(toRow)]
+  const totalGeral = ['TOTAL','','','','','','', estadias.reduce((s,e)=>s+moedaParaNumero(e.valor),0),'','','','','','','']
+  dadosGeral.push(totalGeral)
+  const wsGeral = XLSX.utils.aoa_to_sheet(dadosGeral)
+  XLSX.utils.book_append_sheet(wb, wsGeral, 'Geral')
+  // Uma aba por filial
+  filiais.forEach(f => {
+    const lista = estadias.filter(e => String(e.filialId) === String(f.id))
+    if (!lista.length) return
+    const dados = [cabecalho, ...lista.map(toRow)]
+    const tot = lista.reduce((s,e)=>s+moedaParaNumero(e.valor),0)
+    dados.push(['TOTAL','','','','','','',tot,'','','','','','',''])
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dados), f.nome.slice(0,31))
+  })
+  XLSX.writeFile(wb, `estadias-ldc-${new Date().toISOString().slice(0,10)}.xlsx`)
+  registrarHistorico('Exportou XLSX', `${estadias.length} estadias`)
+}
+
 const SALT='ldc-painel-2024'
 async function hashSenha(s){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s+SALT));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')}
 function estaHasheado(s){return/^[0-9a-f]{64}$/.test(s)}
@@ -417,7 +629,7 @@ if(tema==='escuro'){document.body.classList.add('dark')}
 function $(id){return document.getElementById(id)}
 function toastMsg(msg){toast.innerText=msg;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
 function registrarHistorico(acao,detalhes){historico.unshift({data:new Date().toLocaleString('pt-BR'),usuario:usuarioAtual||'-',acao,detalhes});historico=historico.slice(0,300);salvar();renderAtividadeAoVivo()}
-async function entrar(){let u=usuario.value.trim().toLowerCase();let s=await hashSenha(senha.value.trim());let ok=usuarios.find(x=>x.usuario===u&&x.senha===s);if(!ok){alert('Login inválido');return}usuarioAtual=ok.usuario;usuarioPerfil=ok;login.style.display='none';painel.style.display='block';aplicarPerfilUsuario();carregarRascunho();render();registrarHistorico('Login','Usuário entrou no painel')}
+async function entrar(){let u=usuario.value.trim().toLowerCase();let s=await hashSenha(senha.value.trim());let ok=usuarios.find(x=>x.usuario===u&&x.senha===s);if(!ok){alert('Login inválido');return}usuarioAtual=ok.usuario;usuarioPerfil=ok;login.style.display='none';painel.style.display='block';aplicarPerfilUsuario();carregarRascunho();await carregarFiliais();render();registrarHistorico('Login','Usuário entrou no painel')}
 function logout(){registrarHistorico('Logout','Usuário saiu do painel');location.reload()}
 function salvar(){
   try{
@@ -529,11 +741,12 @@ function alternarTema(){document.body.classList.toggle('dark');let escuro=docume
 function atualizarBotaoTema(){botaoTema.innerText=document.body.classList.contains('dark')?'☀️ Modo claro':'🌙 Modo escuro'}
 
 function mudarAba(aba){
-abaLancadas.classList.toggle('active',aba==='lancadas');abaALancar.classList.toggle('active',aba==='alancar');abaHistorico.classList.toggle('active',aba==='historico');abaRelatorios.classList.toggle('active',aba==='relatorios');abaBackup.classList.toggle('active',aba==='backup')
-tabLancadas.classList.toggle('active',aba==='lancadas');tabALancar.classList.toggle('active',aba==='alancar');tabHistorico.classList.toggle('active',aba==='historico');tabRelatorios.classList.toggle('active',aba==='relatorios');tabBackup.classList.toggle('active',aba==='backup')
+abaLancadas.classList.toggle('active',aba==='lancadas');abaALancar.classList.toggle('active',aba==='alancar');abaHistorico.classList.toggle('active',aba==='historico');abaRelatorios.classList.toggle('active',aba==='relatorios');abaBackup.classList.toggle('active',aba==='backup');document.getElementById('abaFiliais').classList.toggle('active',aba==='filiais')
+tabLancadas.classList.toggle('active',aba==='lancadas');tabALancar.classList.toggle('active',aba==='alancar');tabHistorico.classList.toggle('active',aba==='historico');tabRelatorios.classList.toggle('active',aba==='relatorios');tabBackup.classList.toggle('active',aba==='backup');document.getElementById('tabFiliais').classList.toggle('active',aba==='filiais')
 render()
 if(aba==='relatorios')setTimeout(renderRelatorios,50)
 if(aba==='backup')setTimeout(verificarArmazenamento,50)
+if(aba==='filiais'){renderFiliais()}
 }
 
 function calcular(){
@@ -561,10 +774,14 @@ function adicionar(){
 let calc=calcular()
 if(!calc){alert('Preencha peso, chegada e saída corretamente.');return}
 if(!motorista.value.trim()||!placa.value.trim()){alert('Preencha motorista e placa.');return}
-let item={id:Date.now(),chamado:chamado.value.trim(),motorista:motorista.value.trim(),telefoneMotorista:telefoneMotorista.value.trim(),transportadora:transportadora.value.trim(),prioridade:prioridade.value,pagoPor:pagoPor.value,placa:placa.value.trim().toUpperCase(),peso:peso.value.trim(),horas:calc.horas,valor:calc.valor,chegada:calc.chegada,saida:calc.saida,status:'Aberto',lancadoPor:usuarioAtual,dataLancamento:new Date().toLocaleString('pt-BR'),feitoPor:'',dataFeito:'',finalizadoPor:'',dataFinalizado:''}
+const fId=document.getElementById('filialId').value
+const erroF=document.getElementById('erroFilial')
+if(!fId){erroF.classList.add('show');document.getElementById('filialId').classList.add('field-error');return}
+erroF.classList.remove('show');document.getElementById('filialId').classList.remove('field-error')
+let item={id:Date.now(),chamado:chamado.value.trim(),motorista:motorista.value.trim(),telefoneMotorista:telefoneMotorista.value.trim(),transportadora:transportadora.value.trim(),prioridade:prioridade.value,pagoPor:pagoPor.value,filialId:fId,placa:placa.value.trim().toUpperCase(),peso:peso.value.trim(),horas:calc.horas,valor:calc.valor,chegada:calc.chegada,saida:calc.saida,status:'Aberto',lancadoPor:usuarioAtual,dataLancamento:new Date().toLocaleString('pt-BR'),feitoPor:'',dataFeito:'',finalizadoPor:'',dataFinalizado:''}
 estadias.unshift(item);localStorage.removeItem('rascunhoEstadia');registrarHistorico('Adicionou estadia lançada',`Placa ${item.placa} | ${item.valor}`);salvar();render();limparFormulario();tocarSomModerno(prioridade.value==='Urgente'?'urgente':'salvar');toastMsg('Estadia lançada salva.')
 }
-function limparFormulario(){[chamado,motorista,telefoneMotorista,transportadora,placa,peso,chegadaData,chegadaHora,saidaData,saidaHora].forEach(i=>i.value='');prioridade.value='Normal';if(typeof pagoPor!=='undefined')pagoPor.value='Logística';calcular()}
+function limparFormulario(){[chamado,motorista,telefoneMotorista,transportadora,placa,peso,chegadaData,chegadaHora,saidaData,saidaHora].forEach(i=>i.value='');prioridade.value='Normal';if(typeof pagoPor!=='undefined')pagoPor.value='Logística';const fId=document.getElementById('filialId');if(fId)fId.value='';calcular()}
 function marcarFeito(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Feito',feitoPor:usuarioAtual,dataFeito:new Date().toLocaleString('pt-BR')}:e);registrarHistorico('Marcou como feito',`Placa ${e?.placa||'-'}`);salvar();render()}
 function reabrir(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Aberto',feitoPor:'',dataFeito:'',finalizadoPor:'',dataFinalizado:''}:e);registrarHistorico('Reabriu estadia',`Placa ${e?.placa||'-'}`);salvar();render()}
 function finalizar(id){let e=estadias.find(x=>x.id===id);estadias=estadias.map(e=>e.id===id?{...e,status:'Finalizado',finalizadoPor:usuarioAtual,dataFinalizado:new Date().toLocaleString('pt-BR')}:e);registrarHistorico('Finalizou estadia',`Placa ${e?.placa||'-'}`);tocarSomModerno('finalizar');salvar();render()}
@@ -645,11 +862,12 @@ function render(){
 atualizarBotaoTema()
 let nomes=[...new Set(estadias.map(e=>e.lancadoPor).filter(Boolean))].sort();atualizarSelect(filtroUsuario,nomes)
 let nomesPre=[...new Set(estadiasALancar.map(e=>e.criadoPor).filter(Boolean))].sort();atualizarSelect(filtroPreUsuario,nomesPre)
-let b=(pesquisa.value||'').toUpperCase().trim(),fs=filtroStatus.value,fu=filtroUsuario.value,di=filtroDataInicio.value,df=filtroDataFim.value
-let lista=estadias.filter(e=>{let texto=((e.placa||'')+' '+(e.motorista||'')+' '+(e.chamado||'')+' '+(e.transportadora||'')).toUpperCase();let data=dataLancamentoISO(e);return(!b||texto.includes(b))&&(!fs||e.status===fs)&&(!fu||e.lancadoPor===fu)&&(!di||data>=di)&&(!df||data<=df)})
+let b=(pesquisa.value||'').toUpperCase().trim(),fs=filtroStatus.value,fu=filtroUsuario.value,di=filtroDataInicio.value,df=filtroDataFim.value,ff=(document.getElementById('filtroFilial')||{}).value||''
+preencherSelectFilial()
+let lista=estadias.filter(e=>{let texto=((e.placa||'')+' '+(e.motorista||'')+' '+(e.chamado||'')+' '+(e.transportadora||'')).toUpperCase();let data=dataLancamentoISO(e);return(!b||texto.includes(b))&&(!fs||e.status===fs)&&(!fu||e.lancadoPor===fu)&&(!di||data>=di)&&(!df||data<=df)&&(!ff||String(e.filialId)===String(ff))})
 totalQtd.innerText=lista.length;totalValor.innerText=numeroBR(lista.reduce((s,e)=>s+moedaParaNumero(e.valor),0));totalAbertas.innerText=lista.filter(e=>e.status==='Aberto').length;totalFeitas.innerText=lista.filter(e=>e.status==='Feito'||e.status==='Finalizado').length;totalALancar.innerText=estadiasALancar.length;totalUrgentes.innerText=estadiasALancar.filter(e=>e.prioridade==='Urgente').length
 renderNotificacoes()
-tabela.innerHTML=lista.length?lista.map(e=>`<tr class="${e.status==='Finalizado'?'linha-finalizada':''}"><td><strong>${e.chamado||'-'}</strong></td><td>${e.motorista||'-'}<br><span class="muted">Chegada: ${e.chegada||'-'}<br>Saída: ${e.saida||'-'}</span></td><td>${e.transportadora||'-'}</td><td><span class="plate">${e.placa||'-'}</span></td><td>${e.peso||'-'}</td><td><strong>${e.horas||'0.00'} h</strong></td><td><strong>${e.valor||'R$ 0,00'}</strong></td><td>${badgePagoPor(e.pagoPor)}</td><td><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></td><td>${e.lancadoPor||'-'}</td><td><strong>${(e.dataLancamento||'-').split(',')[0]}</strong><br><span class="muted">${(e.dataLancamento||'').split(',')[1]||''}</span></td><td>${e.telefoneMotorista?`<a class="wa-link" href="https://wa.me/${String(e.telefoneMotorista).replace(/[^0-9]/g,'').startsWith('55')?String(e.telefoneMotorista).replace(/[^0-9]/g,''):'55'+String(e.telefoneMotorista).replace(/[^0-9]/g,'')}" target="_blank">WhatsApp</a>`:'-'}</td><td>${e.status==='Aberto'?timerHtml(e.dataLancamento,'pendente a sair'):'-'}</td><td><span class="status ${e.status==='Finalizado'?'status-finalizado':e.status==='Feito'?'status-feito':'status-aberto'}">${e.status}</span>${e.feitoPor?`<br><span class="muted">Feito por ${e.feitoPor}<br>${e.dataFeito}</span>`:''}${e.finalizadoPor?`<br><span class="muted">Finalizado por ${e.finalizadoPor}<br>${e.dataFinalizado}</span>`:''}</td><td><div class="actions">${e.status==='Finalizado'?`<button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:e.status==='Feito'?`<button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button><button class="btn-purple btn-small" onclick="finalizar(${e.id})">Finalizar</button><button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:`<button class="btn-green btn-small" onclick="marcarFeito(${e.id})">👍 Feito</button><button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button>`}<button class="btn-red btn-small" onclick="excluir(${e.id})">Excluir</button></div></td></tr>`).join(''):`<tr><td colspan="14" class="empty">Nenhuma estadia encontrada.</td></tr>`
+tabela.innerHTML=lista.length?lista.map(e=>`<tr class="${e.status==='Finalizado'?'linha-finalizada':''}"><td><strong>${e.chamado||'-'}</strong></td><td>${e.motorista||'-'}<br><span class="muted">Chegada: ${e.chegada||'-'}<br>Saída: ${e.saida||'-'}</span></td><td>${e.transportadora||'-'}</td><td><span class="filial-badge">${nomeFiliaPorId(e.filialId)}</span></td><td><span class="plate">${e.placa||'-'}</span></td><td>${e.peso||'-'}</td><td><strong>${e.horas||'0.00'} h</strong></td><td><strong>${e.valor||'R$ 0,00'}</strong></td><td>${badgePagoPor(e.pagoPor)}</td><td><span class="prio ${classePrioridade(e.prioridade)}">${e.prioridade||'Normal'}</span></td><td>${e.lancadoPor||'-'}</td><td><strong>${(e.dataLancamento||'-').split(',')[0]}</strong><br><span class="muted">${(e.dataLancamento||'').split(',')[1]||''}</span></td><td>${e.telefoneMotorista?`<a class="wa-link" href="https://wa.me/${String(e.telefoneMotorista).replace(/[^0-9]/g,'').startsWith('55')?String(e.telefoneMotorista).replace(/[^0-9]/g,''):'55'+String(e.telefoneMotorista).replace(/[^0-9]/g,'')}" target="_blank">WhatsApp</a>`:'-'}</td><td>${e.status==='Aberto'?timerHtml(e.dataLancamento,'pendente a sair'):'-'}</td><td><span class="status ${e.status==='Finalizado'?'status-finalizado':e.status==='Feito'?'status-feito':'status-aberto'}">${e.status}</span>${e.feitoPor?`<br><span class="muted">Feito por ${e.feitoPor}<br>${e.dataFeito}</span>`:''}${e.finalizadoPor?`<br><span class="muted">Finalizado por ${e.finalizadoPor}<br>${e.dataFinalizado}</span>`:''}</td><td><div class="actions">${e.status==='Finalizado'?`<button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:e.status==='Feito'?`<button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button><button class="btn-purple btn-small" onclick="finalizar(${e.id})">Finalizar</button><button class="btn-orange btn-small" onclick="reabrir(${e.id})">Reabrir</button>`:`<button class="btn-green btn-small" onclick="marcarFeito(${e.id})">👍 Feito</button><button class="btn-blue btn-small" onclick="mandarMsgMotorista(${e.id})">Mandar msg</button>`}<button class="btn-red btn-small" onclick="excluir(${e.id})">Excluir</button></div></td></tr>`).join(''):`<tr><td colspan="14" class="empty">Nenhuma estadia encontrada.</td></tr>`
 
 let bp=(pesquisaPre.value||'').toUpperCase().trim(),fpu=filtroPreUsuario.value,fpp=filtroPrePrioridade.value
 let listaPre=estadiasALancar.filter(e=>{let texto=((e.placa||'')+' '+(e.transportadora||'')).toUpperCase();return(!bp||texto.includes(bp))&&(!fpu||e.criadoPor===fpu)&&(!fpp||e.prioridade===fpp)})
