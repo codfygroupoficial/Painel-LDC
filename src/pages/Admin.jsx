@@ -16,10 +16,14 @@ export default function Admin() {
   const carregar = useCallback(async () => {
     setCarregando(true)
     try {
-      const data = await baixarAdmin()
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 8000))
+      const data = await Promise.race([baixarAdmin(), timeout])
       setRows(data || [])
-    } catch { }
-    setCarregando(false)
+    } catch {
+      setRows([])
+    } finally {
+      setCarregando(false)
+    }
   }, [])
 
   useEffect(() => { carregar() }, [carregar])
@@ -78,12 +82,18 @@ export default function Admin() {
     }
   }
 
-  if (carregando) return <section className="aba active"><div className="box"><p>Carregando dados de todas as filiais...</p></div></section>
+  if (carregando) return (
+    <section className="aba active">
+      <div className="box" style={{ textAlign: 'center', padding: 40 }}>
+        <p>Carregando dados de todas as filiais...</p>
+        <small style={{ color: 'var(--muted)' }}>Aguarde até 8 segundos</small>
+      </div>
+    </section>
+  )
 
   return (
     <section className="aba active">
 
-      {/* Header */}
       <div className="box" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: '#fff', border: 'none' }}>
         <div className="box-title">
           <div>
@@ -92,8 +102,6 @@ export default function Admin() {
           </div>
           <button className="btn-light btn-small" onClick={carregar}>↺ Atualizar</button>
         </div>
-
-        {/* Stats globais */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginTop: 16 }}>
           {[
             { label: 'Filiais ativas', value: statsGlobal.filiais, cor: '#4ade80' },
@@ -111,7 +119,6 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Cards por filial */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginBottom: 24 }}>
         {filiaisAtivas.map(filial => {
           const s = statsFilial(filial)
@@ -138,21 +145,15 @@ export default function Admin() {
                 <span style={{ fontSize: 13, color: 'var(--muted)' }}>Valor total</span>
                 <strong style={{ color: '#4ade80' }}>{s.valor}</strong>
               </div>
-              {s.urgentes > 0 && (
-                <div style={{ marginTop: 6, color: '#f87171', fontSize: 13 }}>⚠️ {s.urgentes} urgente(s)</div>
-              )}
+              {s.urgentes > 0 && <div style={{ marginTop: 6, color: '#f87171', fontSize: 13 }}>⚠️ {s.urgentes} urgente(s)</div>}
             </div>
           )
         })}
-
         {filiaisAtivas.length === 0 && (
-          <div className="box" style={{ margin: 0, textAlign: 'center', color: 'var(--muted)' }}>
-            Nenhuma filial com dados ainda.
-          </div>
+          <div className="box" style={{ margin: 0, textAlign: 'center', color: 'var(--muted)' }}>Nenhuma filial com dados ainda.</div>
         )}
       </div>
 
-      {/* Tabela global */}
       <div className="box">
         <div className="box-title">
           <h2>Todas as estadias</h2>
@@ -170,10 +171,7 @@ export default function Admin() {
           <div className="table-scroll">
             <table>
               <thead>
-                <tr>
-                  <th>Filial</th><th>Chamado</th><th>Motorista</th><th>Placa</th>
-                  <th>Valor</th><th>Status</th><th>Lançado por</th>
-                </tr>
+                <tr><th>Filial</th><th>Chamado</th><th>Motorista</th><th>Placa</th><th>Valor</th><th>Status</th><th>Lançado por</th></tr>
               </thead>
               <tbody>
                 {listaFiltrada.length === 0
@@ -195,24 +193,12 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Gerenciar usuários */}
       <div className="box">
-        <div className="box-title">
-          <h2>👥 Gerenciar usuários</h2>
-        </div>
+        <div className="box-title"><h2>👥 Gerenciar usuários</h2></div>
         <div className="form-grid" style={{ marginBottom: 12 }}>
-          <div className="field">
-            <label>Nome</label>
-            <input value={novoUsuario.nome} onChange={e => setNovoUsuario(p => ({ ...p, nome: e.target.value }))} placeholder="Nome completo" />
-          </div>
-          <div className="field">
-            <label>Login</label>
-            <input value={novoUsuario.usuario} onChange={e => setNovoUsuario(p => ({ ...p, usuario: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') }))} placeholder="username" />
-          </div>
-          <div className="field">
-            <label>Senha</label>
-            <input type="password" value={novoUsuario.senha} onChange={e => setNovoUsuario(p => ({ ...p, senha: e.target.value }))} placeholder="Senha do usuário" />
-          </div>
+          <div className="field"><label>Nome</label><input value={novoUsuario.nome} onChange={e => setNovoUsuario(p => ({ ...p, nome: e.target.value }))} placeholder="Nome completo" /></div>
+          <div className="field"><label>Login</label><input value={novoUsuario.usuario} onChange={e => setNovoUsuario(p => ({ ...p, usuario: e.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, '') }))} placeholder="username" /></div>
+          <div className="field"><label>Senha</label><input type="password" value={novoUsuario.senha} onChange={e => setNovoUsuario(p => ({ ...p, senha: e.target.value }))} placeholder="Senha do usuário" /></div>
           <div className="field">
             <label>Cargo</label>
             <select value={novoUsuario.cargo} onChange={e => setNovoUsuario(p => ({ ...p, cargo: e.target.value }))}>
@@ -228,16 +214,12 @@ export default function Admin() {
           </div>
         </div>
         <button className="btn-blue" onClick={handleCriarUsuario}>Criar usuário</button>
-
         <div style={{ marginTop: 16 }}>
           {usuarios.map(u => (
             <div key={u.usuario} className="online-user-pill" style={{ marginBottom: 8 }}>
               <div className="online-user-left">
                 <span className="avatar mini">{u.avatar}</span>
-                <div>
-                  <strong>{u.nome}</strong>
-                  <small>{u.usuario} • {u.cargo} • {nomeFilial(u.filial)}</small>
-                </div>
+                <div><strong>{u.nome}</strong><small>{u.usuario} • {u.cargo} • {nomeFilial(u.filial)}</small></div>
               </div>
               {u.usuario !== 'admin' && (
                 <button className="btn-red btn-small" onClick={() => confirm(`Excluir ${u.usuario}?`) && excluirUsuario(u.usuario)}>Excluir</button>
@@ -247,14 +229,11 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Gerenciar filiais */}
       <div className="box">
         <div className="box-title">
           <h2>🏭 Gerenciar filiais</h2>
           <span>{filiais.length} filial(is) cadastrada(s)</span>
         </div>
-
-        {/* Lista de filiais existentes */}
         <div style={{ marginBottom: 16 }}>
           {filiais.map(f => (
             <div key={f.id} className="online-user-pill" style={{ marginBottom: 8 }}>
@@ -270,26 +249,13 @@ export default function Admin() {
             </div>
           ))}
         </div>
-
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
           <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12 }}>Adicionar nova filial:</p>
           <div className="form-grid">
-            <div className="field">
-              <label>ID da filial</label>
-              <input value={novaFilial.id} onChange={e => setNovaFilial(p => ({ ...p, id: e.target.value.toLowerCase().replace(/\s/g, '-') }))} placeholder="ex: sorriso-mt" />
-            </div>
-            <div className="field">
-              <label>Nome</label>
-              <input value={novaFilial.nome} onChange={e => setNovaFilial(p => ({ ...p, nome: e.target.value }))} placeholder="ex: Via Log Sorriso" />
-            </div>
-            <div className="field">
-              <label>Cidade</label>
-              <input value={novaFilial.cidade} onChange={e => setNovaFilial(p => ({ ...p, cidade: e.target.value }))} placeholder="ex: Sorriso" />
-            </div>
-            <div className="field">
-              <label>Estado</label>
-              <input value={novaFilial.estado} onChange={e => setNovaFilial(p => ({ ...p, estado: e.target.value.toUpperCase().slice(0, 2) }))} placeholder="MT" maxLength={2} />
-            </div>
+            <div className="field"><label>ID da filial</label><input value={novaFilial.id} onChange={e => setNovaFilial(p => ({ ...p, id: e.target.value.toLowerCase().replace(/\s/g, '-') }))} placeholder="ex: sorriso-mt" /></div>
+            <div className="field"><label>Nome</label><input value={novaFilial.nome} onChange={e => setNovaFilial(p => ({ ...p, nome: e.target.value }))} placeholder="ex: Via Log Sorriso" /></div>
+            <div className="field"><label>Cidade</label><input value={novaFilial.cidade} onChange={e => setNovaFilial(p => ({ ...p, cidade: e.target.value }))} placeholder="ex: Sorriso" /></div>
+            <div className="field"><label>Estado</label><input value={novaFilial.estado} onChange={e => setNovaFilial(p => ({ ...p, estado: e.target.value.toUpperCase().slice(0, 2) }))} placeholder="MT" maxLength={2} /></div>
           </div>
           <button className="btn-purple" onClick={handleAdicionarFilial}>Adicionar filial</button>
         </div>
