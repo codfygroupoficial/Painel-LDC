@@ -1,8 +1,9 @@
 import { createClient } from '@supabase/supabase-js'
 
-const URL = 'https://qzjwjylpbmnggczrbgoe.supabase.co'
-const KEY = 'sb_publishable_om8iQIEuLHPQpxgXCOqLgw_xOGyCko_'
+const URL = import.meta.env.VITE_SUPABASE_URL
+const KEY = import.meta.env.VITE_SUPABASE_KEY
 export const TABLE = 'ldc_estadias'
+export const USUARIOS_TABLE = 'ldc_usuarios'
 export const BUCKET = 'ldc-anexos'
 
 let client = null
@@ -12,9 +13,10 @@ export const getClient = () => {
   return client
 }
 
-export const payload = (item, tipo) => ({
+export const payload = (item, tipo, filial = 'principal') => ({
   local_id: String(item.id),
   tipo,
+  filial,
   placa: item.placa || '',
   status: item.status || '',
   prioridade: item.prioridade || 'Normal',
@@ -22,9 +24,9 @@ export const payload = (item, tipo) => ({
   updated_at: new Date().toISOString(),
 })
 
-export const salvar = async (item, tipo) => {
+export const salvar = async (item, tipo, filial = 'principal') => {
   const sb = getClient()
-  const { error } = await sb.from(TABLE).upsert(payload(item, tipo), { onConflict: 'local_id' })
+  const { error } = await sb.from(TABLE).upsert(payload(item, tipo, filial), { onConflict: 'local_id' })
   if (error) throw error
 }
 
@@ -34,7 +36,16 @@ export const deletar = async (id) => {
   if (error) throw error
 }
 
-export const baixarTodos = async () => {
+export const baixarTodos = async (filial = null) => {
+  const sb = getClient()
+  let query = sb.from(TABLE).select('*').order('updated_at', { ascending: false })
+  if (filial) query = query.eq('filial', filial)
+  const { data, error } = await query
+  if (error) throw error
+  return data
+}
+
+export const baixarAdmin = async () => {
   const sb = getClient()
   const { data, error } = await sb.from(TABLE).select('*').order('updated_at', { ascending: false })
   if (error) throw error
@@ -66,4 +77,47 @@ export const iniciarRealtime = (onMudanca) => {
     .channel('ldc-estadias-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, onMudanca)
     .subscribe()
+}
+
+export const carregarUsuarios = async () => {
+  const sb = getClient()
+  const { data, error } = await sb.from(USUARIOS_TABLE).select('*')
+  if (error) throw error
+  return data || []
+}
+
+export const salvarUsuario = async (user) => {
+  const sb = getClient()
+  const { error } = await sb.from(USUARIOS_TABLE).upsert({
+    usuario: user.usuario,
+    senha: user.senha,
+    nome: user.nome,
+    cargo: user.cargo || 'Operador',
+    avatar: user.avatar || '',
+    foto: user.foto || '',
+    filial: user.filial || 'principal',
+  }, { onConflict: 'usuario' })
+  if (error) throw error
+}
+
+export const deletarUsuario = async (usuario) => {
+  const sb = getClient()
+  const { error } = await sb.from(USUARIOS_TABLE).delete().eq('usuario', usuario)
+  if (error) throw error
+}
+
+export const iniciarPresenca = (usuario, onUpdate) => {
+  const sb = getClient()
+  const canal = sb.channel('presenca-online', {
+    config: { presence: { key: usuario.usuario } },
+  })
+  canal
+    .on('presence', { event: 'sync' }, () => {
+      const ativos = Object.values(canal.presenceState()).flat()
+      onUpdate(ativos)
+    })
+    .subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') await canal.track({ ...usuario, t: Date.now() })
+    })
+  return canal
 }

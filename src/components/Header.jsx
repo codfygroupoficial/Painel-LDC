@@ -14,7 +14,7 @@ export default function Header({ onMenuMobile }) {
       <header className="topbar">
         <div className="topbar-inner">
           <div>
-            <h1><span>🏠</span> Painel LDC</h1>
+            <h1><span>🏠</span> Painel Via Log</h1>
             <p>Estadias, pendências, anexos e nuvem em tempo real.</p>
           </div>
 

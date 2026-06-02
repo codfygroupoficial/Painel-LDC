@@ -38,7 +38,7 @@ export default function EstadiaALancar({ formRef }) {
 
           <div className="field">
             <label>Transportadora</label>
-            <input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: LDC" />
+            <input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: Via Log" />
           </div>
 
           <div className="field">

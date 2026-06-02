@@ -1,22 +1,24 @@
 import { useApp } from '../context/AppContext'
 
 const ABAS = [
+  { id: 'inicio',   label: '🏠 Início' },
   { id: 'lancadas', label: '📦 Estadias lançadas' },
-  { id: 'alancar', label: '📋 Estadias a lançar' },
-  { id: 'historico', label: '📜 Histórico' },
-  { id: 'backup', label: '💾 Backup' },
+  { id: 'alancar',  label: '📋 Estadias a lançar' },
+  { id: 'historico',label: '📜 Histórico' },
+  { id: 'backup',   label: '💾 Backup' },
 ]
 
 export default function Sidebar({ onFechar }) {
   const { abaAtiva, mudarAba, estadiasALancar, cloudStatus, cloudText, usuarioAtual } = useApp()
+  const isAdmin = usuarioAtual?.cargo === 'Admin'
 
   const handleTab = (id) => { mudarAba(id); onFechar?.() }
 
   return (
     <aside className="sidebar-pro" id="sidebarPro">
       <div className="brand-pro">
-        <div className="logo">LDC</div>
-        <div><h1>Painel LDC</h1><p>Sistema de estadias</p></div>
+        <img src="/logo.png" alt="Via Log" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+        <div><h1>Painel Via Log</h1><p>Sistema de estadias</p></div>
       </div>
 
       <nav className="sidebar-nav">
@@ -26,6 +28,12 @@ export default function Sidebar({ onFechar }) {
             {a.id === 'alancar' && <span className="pending-badge">{estadiasALancar.length}</span>}
           </button>
         ))}
+        {isAdmin && (
+          <button className={`tab ${abaAtiva === 'admin' ? 'active' : ''}`} onClick={() => handleTab('admin')}
+            style={{ marginTop: 8, borderTop: '1px solid rgba(255,255,255,.1)', paddingTop: 12 }}>
+            🏢 Painel Admin
+          </button>
+        )}
       </nav>
 
       <div className="sidebar-status">

@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { calcularEstadia, linkWhatsapp, dataISOTexto } from '../utils/index'
+import DropZone from '../components/DropZone'
+import { nomeFilial } from '../data/filiais'
 
 const EMPTY = { chamado: '', motorista: '', telefoneMotorista: '', transportadora: '', placa: '', peso: '', prioridade: 'Normal', pagoPor: 'Logística', chegadaData: '', chegadaHora: '', saidaData: '', saidaHora: '' }
 
@@ -23,21 +25,80 @@ function classeStatus(s) {
 }
 
 export default function EstadiaLancada({ formRef }) {
-  const { estadias, adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada, dataISOTexto: iso } = useApp()
+  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais, dataISOTexto: iso } = useApp()
   const [form, setForm] = useState(EMPTY)
+  const [editandoId, setEditandoId] = useState(null)
+  const [arquivos, setArquivos] = useState([])
+  const [existingAnexos, setExistingAnexos] = useState([])
   const [busca, setBusca] = useState('')
   const [filtroStatus, setFiltroStatus] = useState('')
+  const [filtroFilial, setFiltroFilial] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
   const calc = calcularEstadia(form.peso, form.chegadaData, form.chegadaHora, form.saidaData, form.saidaHora)
 
+  useEffect(() => {
+    if (!itemParaLancar) return
+    setForm(prev => ({
+      ...prev,
+      placa: itemParaLancar.placa || '',
+      transportadora: itemParaLancar.transportadora || '',
+      prioridade: itemParaLancar.prioridade || 'Normal',
+    }))
+    setExistingAnexos(itemParaLancar.anexos || [])
+    setArquivos([])
+    limparItemParaLancar()
+    formRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [itemParaLancar])
+
+  const handleEditar = (e) => {
+    setEditandoId(e.id)
+    setForm({
+      chamado: e.chamado || '',
+      motorista: e.motorista || '',
+      telefoneMotorista: e.telefoneMotorista || '',
+      transportadora: e.transportadora || '',
+      placa: e.placa || '',
+      peso: e.peso || '',
+      prioridade: e.prioridade || 'Normal',
+      pagoPor: e.pagoPor || 'Logística',
+      chegadaData: e.chegadaData || '',
+      chegadaHora: e.chegadaHora || '',
+      saidaData: e.saidaData || '',
+      saidaHora: e.saidaHora || '',
+    })
+    setExistingAnexos(e.anexos || [])
+    setArquivos([])
+    formRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  const handleCancelarEdicao = () => {
+    setEditandoId(null)
+    setForm(EMPTY)
+    setArquivos([])
+    setExistingAnexos([])
+  }
+
   const handleSalvar = async () => {
     if (!calc) { alert('Preencha peso, chegada e saída corretamente.'); return }
     if (!form.motorista.trim() || !form.placa.trim()) { alert('Preencha motorista e placa.'); return }
-    await adicionarLancada({ ...form, ...calc })
+    const novosAnexos = []
+    for (const file of arquivos.slice(0, 2)) {
+      const up = await uploadAnexoItem(file)
+      if (up) novosAnexos.push(up)
+    }
+    const anexos = [...existingAnexos, ...novosAnexos]
+    if (editandoId) {
+      await editarLancada(editandoId, { ...form, anexos })
+      setEditandoId(null)
+    } else {
+      await adicionarLancada({ ...form, ...calc, anexos })
+    }
     setForm(EMPTY)
+    setArquivos([])
+    setExistingAnexos([])
   }
 
   const lista = estadias.filter(e => {
@@ -45,6 +106,7 @@ export default function EstadiaLancada({ formRef }) {
     const data = dataISOTexto(e.dataLancamento)
     return (!busca || txt.includes(busca.toUpperCase()))
       && (!filtroStatus || e.status === filtroStatus)
+      && (!filtroFilial || e.filial === filtroFilial)
       && (!dataInicio || data >= dataInicio)
       && (!dataFim || data <= dataFim)
   })
@@ -54,7 +116,7 @@ export default function EstadiaLancada({ formRef }) {
       {/* Formulário */}
       <div className="box" ref={formRef}>
         <div className="box-title">
-          <h2>Adicionar estadia lançada</h2>
+          <h2>{editandoId ? 'Editar estadia' : 'Adicionar estadia lançada'}</h2>
           <span>Cálculo: peso (ton) × R$ 0,80 × horas após 12h</span>
         </div>
 
@@ -76,7 +138,7 @@ export default function EstadiaLancada({ formRef }) {
 
           <div className="field">
             <label>Transportadora</label>
-            <input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: LDC" />
+            <input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: Via Log" />
           </div>
 
           <div className="field">
@@ -118,6 +180,21 @@ export default function EstadiaLancada({ formRef }) {
               </div>
             </>
           ))}
+
+          <DropZone arquivos={arquivos} onChange={setArquivos} />
+
+          {existingAnexos.length > 0 && (
+            <div className="field wide">
+              <label>Anexos existentes</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {existingAnexos.map((a, i) => (
+                  <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">
+                    📄 {a.nome || `Arquivo ${i + 1}`}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="calc-preview">
@@ -131,20 +208,31 @@ export default function EstadiaLancada({ formRef }) {
           </div>
         </div>
 
-        <button className="btn-green btn-full" onClick={handleSalvar}>Salvar estadia lançada</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn-green btn-full" onClick={handleSalvar}>
+            {editandoId ? 'Salvar alterações' : 'Salvar estadia lançada'}
+          </button>
+          {editandoId && (
+            <button className="btn-light" onClick={handleCancelarEdicao}>Cancelar</button>
+          )}
+        </div>
       </div>
 
       {/* Filtros */}
       <div className="box">
         <div className="box-title">
           <h2>Consultar estadias lançadas</h2>
-          <button className="btn-light btn-small" onClick={() => { setBusca(''); setFiltroStatus(''); setDataInicio(''); setDataFim('') }}>Limpar filtros</button>
+          <button className="btn-light btn-small" onClick={() => { setBusca(''); setFiltroStatus(''); setFiltroFilial(''); setDataInicio(''); setDataFim('') }}>Limpar filtros</button>
         </div>
         <div className="filters">
           <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Pesquisar placa, motorista, chamado..." />
           <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
             <option value="">Todos status</option>
             <option>Aberto</option><option>Feito</option><option>Finalizado</option>
+          </select>
+          <select value={filtroFilial} onChange={e => setFiltroFilial(e.target.value)}>
+            <option value="">Todas as filiais</option>
+            {filiais.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
           </select>
           <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
           <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
@@ -159,12 +247,12 @@ export default function EstadiaLancada({ formRef }) {
               <tr>
                 <th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Placa</th>
                 <th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th>
-                <th>Prioridade</th><th>Lançado por</th><th>Status</th><th>Ações</th>
+                <th>Prioridade</th><th>Filial</th><th>Anexos</th><th>Lançado por</th><th>Status</th><th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {lista.length === 0
-                ? <tr><td colSpan={12} className="empty">Nenhuma estadia encontrada.</td></tr>
+                ? <tr><td colSpan={14} className="empty">Nenhuma estadia encontrada.</td></tr>
                 : lista.map(e => (
                   <tr key={e.id}>
                     <td><strong>{e.chamado || '-'}</strong><br /><small>{e.dataLancamento || ''}</small></td>
@@ -176,6 +264,12 @@ export default function EstadiaLancada({ formRef }) {
                     <td><strong>{e.valor || 'R$ 0,00'}</strong></td>
                     <td>{badgePago(e.pagoPor)}</td>
                     <td><span className={`prio ${classePrio(e.prioridade)}`}>{e.prioridade || 'Normal'}</span></td>
+                    <td><span className="badge badge-logistica">{nomeFilial(e.filial)}</span></td>
+                    <td>
+                      {e.anexos?.length
+                        ? e.anexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">📄 {a.nome || `Arquivo ${i + 1}`}</a>)
+                        : '-'}
+                    </td>
                     <td>{e.lancadoPor || '-'}</td>
                     <td>
                       <span className={`status ${classeStatus(e.status)}`}>{e.status}</span>
@@ -187,6 +281,7 @@ export default function EstadiaLancada({ formRef }) {
                         {e.status === 'Aberto' && <button className="btn-green btn-small" onClick={() => marcarFeito(e.id)}>Feito</button>}
                         {e.status === 'Feito' && <button className="btn-purple btn-small" onClick={() => finalizar(e.id)}>Finalizar</button>}
                         {e.status !== 'Aberto' && <button className="btn-orange btn-small" onClick={() => reabrir(e.id)}>Reabrir</button>}
+                        <button className="btn-light btn-small" onClick={() => handleEditar(e)}>Editar</button>
                         {e.telefoneMotorista && <a className="btn btn-green btn-small" href={linkWhatsapp(e)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
                         <button className="btn-red btn-small" onClick={() => confirm('Excluir esta estadia?') && excluirLancada(e.id)}>Excluir</button>
                       </div>

@@ -1,7 +1,14 @@
 import { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react'
 import { defaultUsers } from '../data/defaultUsers'
-import { dinheiro, moedaNumero, gerarId, baixarArquivo, dataISOTexto } from '../utils/index'
+import { FILIAIS } from '../data/filiais'
+import { dinheiro, moedaNumero, gerarId, baixarArquivo, dataISOTexto, calcularEstadia } from '../utils/index'
 import * as sb from '../lib/supabase'
+
+const hashSenha = async (senha) => {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha + 'ldc2025'))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+const isHash = (s) => /^[a-f0-9]{64}$/.test(s)
 
 /* ─── Estado inicial ────────────────────────────────────── */
 const load = (key, fallback) => {
@@ -9,18 +16,20 @@ const load = (key, fallback) => {
 }
 
 const initialState = {
-  usuarioAtual: load('usuarioLogadoLDC', null),
-  usuarios: load('usuariosPainelLDC', defaultUsers),
+  usuarioAtual: load('usuarioLogadoViaLog', null),
+  usuarios: load('usuariosPainelViaLog', defaultUsers),
+  filiais: load('filiaisViaLog', FILIAIS),
   estadias: load('estadias', []),
   estadiasALancar: load('estadiasALancar', []),
   historico: load('historicoEstadias', []),
-  abaAtiva: 'lancadas',
-  tema: load('temaPainelLDC', 'light'),
-  somAtivo: load('somPainelLDC', 'off') === 'on',
+  abaAtiva: 'inicio',
+  itemParaLancar: null,
+  tema: load('temaPainelViaLog', 'light'),
+  somAtivo: load('somPainelViaLog', 'off') === 'on',
   cloudStatus: 'offline',
   cloudText: 'Faça login para conectar.',
-  filaNuvem: load('filaSupabaseLDC', []),
-  ultimoSave: load('ultimoSaveSupabaseLDC', ''),
+  filaNuvem: load('filaSupabaseViaLog', []),
+  ultimoSave: load('ultimoSaveSupabaseViaLog', ''),
   usuariosOnline: [],
   activityFeed: [],
   toasts: [],
@@ -31,10 +40,12 @@ function reducer(state, action) {
   switch (action.type) {
     case 'SET_USUARIO': return { ...state, usuarioAtual: action.payload }
     case 'SET_USUARIOS': return { ...state, usuarios: action.payload }
+    case 'SET_FILIAIS': return { ...state, filiais: action.payload }
     case 'SET_ESTADIAS': return { ...state, estadias: action.payload }
     case 'SET_A_LANCAR': return { ...state, estadiasALancar: action.payload }
     case 'SET_HISTORICO': return { ...state, historico: action.payload }
     case 'SET_ABA': return { ...state, abaAtiva: action.payload }
+    case 'SET_ITEM_LANCAR': return { ...state, itemParaLancar: action.payload }
     case 'SET_TEMA': return { ...state, tema: action.payload }
     case 'SET_SOM': return { ...state, somAtivo: action.payload }
     case 'SET_CLOUD': return { ...state, cloudStatus: action.status, cloudText: action.text }
@@ -56,64 +67,70 @@ export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
   const supabaseOnline = useRef(false)
   const canalRealtime = useRef(null)
+  const canalPresenca = useRef(null)
   const recebendoNuvem = useRef(false)
-  const presencaTimer = useRef(null)
+  const conectarRef = useRef(null)
+  const usuarioRef = useRef(initialState.usuarioAtual)
+
+  /* Startup: carrega usuários e reconecta se já havia sessão */
+  useEffect(() => {
+    if (!navigator.onLine) return
+    const init = async () => {
+      try {
+        const remotos = await sb.carregarUsuarios()
+        if (remotos.length > 0) dispatch({ type: 'SET_USUARIOS', payload: remotos })
+        else for (const u of initialState.usuarios) await sb.salvarUsuario(u).catch(() => {})
+      } catch {}
+      if (initialState.usuarioAtual) {
+        iniciarPresenca(initialState.usuarioAtual)
+        conectarRef.current?.()
+      }
+    }
+    init()
+  }, [])
 
   /* Persistência local */
   useEffect(() => {
-    localStorage.setItem('usuariosPainelLDC', JSON.stringify(state.usuarios))
+    localStorage.setItem('usuariosPainelViaLog', JSON.stringify(state.usuarios))
+    localStorage.setItem('filiaisViaLog', JSON.stringify(state.filiais))
     localStorage.setItem('estadias', JSON.stringify(state.estadias))
     localStorage.setItem('estadiasALancar', JSON.stringify(state.estadiasALancar))
     localStorage.setItem('historicoEstadias', JSON.stringify(state.historico))
-  }, [state.usuarios, state.estadias, state.estadiasALancar, state.historico])
+  }, [state.usuarios, state.filiais, state.estadias, state.estadiasALancar, state.historico])
 
   useEffect(() => {
-    localStorage.setItem('temaPainelLDC', state.tema)
+    localStorage.setItem('temaPainelViaLog', state.tema)
     document.documentElement.classList.toggle('dark', state.tema === 'dark')
   }, [state.tema])
 
   useEffect(() => {
-    localStorage.setItem('somPainelLDC', state.somAtivo ? 'on' : 'off')
+    localStorage.setItem('somPainelViaLog', state.somAtivo ? 'on' : 'off')
   }, [state.somAtivo])
 
   useEffect(() => {
-    localStorage.setItem('filaSupabaseLDC', JSON.stringify(state.filaNuvem))
+    localStorage.setItem('filaSupabaseViaLog', JSON.stringify(state.filaNuvem))
   }, [state.filaNuvem])
 
-  /* Presença online via localStorage */
-  useEffect(() => {
-    const sync = () => {
-      try {
-        const raw = JSON.parse(localStorage.getItem('usuariosOnlineLDC') || '{}')
-        const ativos = Object.values(raw).filter(u => Date.now() - (u.t || 0) < 30000)
-        dispatch({ type: 'SET_ONLINE', payload: ativos })
-      } catch {}
+  /* Manter ref de usuário sempre atualizado */
+  useEffect(() => { usuarioRef.current = state.usuarioAtual }, [state.usuarioAtual])
+
+  const iniciarPresenca = useCallback((usuario) => {
+    if (canalPresenca.current) {
+      canalPresenca.current.unsubscribe()
+      canalPresenca.current = null
     }
-    const id = setInterval(sync, 5000)
-    window.addEventListener('storage', sync)
-    return () => { clearInterval(id); window.removeEventListener('storage', sync) }
+    canalPresenca.current = sb.iniciarPresenca(usuario, (ativos) => {
+      dispatch({ type: 'SET_ONLINE', payload: ativos })
+    })
   }, [])
 
-  const salvarPresenca = useCallback(() => {
-    if (!state.usuarioAtual) return
-    const raw = JSON.parse(localStorage.getItem('usuariosOnlineLDC') || '{}')
-    raw[state.usuarioAtual.usuario] = { ...state.usuarioAtual, t: Date.now() }
-    localStorage.setItem('usuariosOnlineLDC', JSON.stringify(raw))
-  }, [state.usuarioAtual])
-
-  const iniciarPresenca = useCallback(() => {
-    clearInterval(presencaTimer.current)
-    salvarPresenca()
-    presencaTimer.current = setInterval(salvarPresenca, 8000)
-  }, [salvarPresenca])
-
-  /* Reconectar automático */
+  /* Reconectar automático — intervalo estável via refs */
   useEffect(() => {
     const id = setInterval(() => {
-      if (state.usuarioAtual && !supabaseOnline.current && navigator.onLine) conectarSupabase()
+      if (usuarioRef.current && !supabaseOnline.current && navigator.onLine) conectarRef.current?.()
     }, 15000)
     return () => clearInterval(id)
-  })
+  }, [])
 
   /* ─── Helpers internos ────────────────────────────────── */
   const toast = useCallback((texto, tipo = '') => {
@@ -127,11 +144,9 @@ export function AppProvider({ children }) {
   }, [])
 
   const registrarHistorico = useCallback((acao, detalhes) => {
-    dispatch(s => {
-      const novo = { data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao, detalhes }
-      const hist = [novo, ...state.historico].slice(0, 300)
-      dispatch({ type: 'SET_HISTORICO', payload: hist })
-    })
+    const novo = { data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao, detalhes }
+    const hist = [novo, ...state.historico].slice(0, 300)
+    dispatch({ type: 'SET_HISTORICO', payload: hist })
     feed(acao, detalhes, '📋')
   }, [state.usuarioAtual, state.historico, feed])
 
@@ -141,17 +156,17 @@ export function AppProvider({ children }) {
 
   /* ─── Supabase ────────────────────────────────────────── */
   const salvarNuvem = useCallback(async (item, tipo) => {
+    const filial = state.usuarioAtual?.filial || 'principal'
     if (!supabaseOnline.current || !navigator.onLine) {
-      dispatch(prev => ({ ...prev }))
-      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo) }]
+      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo, filial) }]
       dispatch({ type: 'SET_FILA', payload: fila })
       return
     }
     try {
       setCloud('syncing', 'Salvando na nuvem...')
-      await sb.salvar(item, tipo)
+      await sb.salvar(item, tipo, filial)
       const agora = new Date().toLocaleString('pt-BR')
-      localStorage.setItem('ultimoSaveSupabaseLDC', agora)
+      localStorage.setItem('ultimoSaveSupabaseViaLog', agora)
       dispatch({ type: 'SET_ULTIMO_SAVE', payload: agora })
       setCloud('online', 'Salvo automaticamente.')
     } catch {
@@ -189,7 +204,7 @@ export function AppProvider({ children }) {
     }
     dispatch({ type: 'SET_FILA', payload: restante })
     const agora = new Date().toLocaleString('pt-BR')
-    localStorage.setItem('ultimoSaveSupabaseLDC', agora)
+    localStorage.setItem('ultimoSaveSupabaseViaLog', agora)
     dispatch({ type: 'SET_ULTIMO_SAVE', payload: agora })
     setCloud(restante.length ? 'offline' : 'online', restante.length ? 'Ainda há pendências.' : 'Tudo sincronizado.')
   }, [state.filaNuvem, setCloud])
@@ -197,7 +212,9 @@ export function AppProvider({ children }) {
   const baixarNuvem = useCallback(async (aviso = true) => {
     if (!supabaseOnline.current) return
     try {
-      const data = await sb.baixarTodos()
+      const isAdmin = state.usuarioAtual?.cargo === 'Admin'
+      const filial = isAdmin ? null : (state.usuarioAtual?.filial || 'principal')
+      const data = await sb.baixarTodos(filial)
       recebendoNuvem.current = true
       const lancadas = data.filter(x => x.tipo === 'lancada').map(x => x.dados).filter(Boolean)
       const pendentes = data.filter(x => x.tipo === 'a_lancar').map(x => x.dados).filter(Boolean)
@@ -214,15 +231,9 @@ export function AppProvider({ children }) {
 
   const conectarSupabase = useCallback(async () => {
     if (!navigator.onLine) { setCloud('offline', 'Sem internet.'); return }
+    if (supabaseOnline.current) return
     try {
-      setCloud('syncing', 'Testando conexão...')
-      const client = sb.getClient()
-      const { error } = await client.from(sb.TABLE).select('id').limit(1)
-      if (error) throw error
-      supabaseOnline.current = true
-      setCloud('online', 'Conectado. Salvamento automático ativo.')
-      toast('Nuvem conectada.', 'ok')
-      await sincronizarFila()
+      setCloud('syncing', 'Conectando...')
       if (!canalRealtime.current) {
         canalRealtime.current = sb.iniciarRealtime(async () => {
           if (recebendoNuvem.current) return
@@ -231,12 +242,19 @@ export function AppProvider({ children }) {
           setCloud('online', 'Atualizado em tempo real.')
         })
       }
-      await baixarNuvem(false)
-    } catch (e) {
+      await Promise.all([sincronizarFila(), baixarNuvem(false)])
+      supabaseOnline.current = true
+      setCloud('online', 'Conectado. Salvamento automático ativo.')
+      toast('Nuvem conectada.', 'ok')
+    } catch {
       supabaseOnline.current = false
+      canalRealtime.current = null
       setCloud('offline', 'Erro na nuvem. Verifique o Supabase.')
     }
   }, [sincronizarFila, baixarNuvem, setCloud, feed, toast])
+
+  /* Manter ref de conectar sempre atualizado */
+  useEffect(() => { conectarRef.current = conectarSupabase }, [conectarSupabase])
 
   const uploadAnexoItem = useCallback(async (file) => {
     if (supabaseOnline.current) {
@@ -246,44 +264,77 @@ export function AppProvider({ children }) {
   }, [toast])
 
   /* ─── Auth ────────────────────────────────────────────── */
-  const entrar = useCallback((login, senha) => {
-    const usuarios = JSON.parse(localStorage.getItem('usuariosPainelLDC') || 'null') || state.usuarios
-    const user = usuarios.find(u => u.usuario.toLowerCase() === login.toLowerCase() && u.senha === senha)
+  const entrar = useCallback(async (login, senha) => {
+    const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
+    const senhaH = await hashSenha(senha)
+    const user = usuarios.find(u => {
+      if (u.usuario.toLowerCase() !== login.toLowerCase()) return false
+      return isHash(u.senha) ? u.senha === senhaH : u.senha === senha
+    })
     if (!user) { toast('Login inválido.', 'err'); return false }
+    if (!isHash(user.senha)) {
+      const lista = usuarios.map(u => u.usuario === user.usuario ? { ...u, senha: senhaH } : u)
+      dispatch({ type: 'SET_USUARIOS', payload: lista })
+    }
     dispatch({ type: 'SET_USUARIO', payload: user })
-    localStorage.setItem('usuarioLogadoLDC', JSON.stringify(user))
-    iniciarPresenca()
+    localStorage.setItem('usuarioLogadoViaLog', JSON.stringify(user))
+    iniciarPresenca(user)
     setTimeout(() => conectarSupabase(), 100)
     feed('Login', `${user.nome} entrou no painel.`, '👤')
     return true
   }, [state.usuarios, toast, iniciarPresenca, conectarSupabase, feed])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('usuarioLogadoLDC')
+    localStorage.removeItem('usuarioLogadoViaLog')
     dispatch({ type: 'SET_USUARIO', payload: null })
-    clearInterval(presencaTimer.current)
+    if (canalPresenca.current) {
+      canalPresenca.current.unsubscribe()
+      canalPresenca.current = null
+    }
   }, [])
 
-  const criarUsuario = useCallback((dados) => {
+  const verificarSenhaAdmin = useCallback(async (senha) => {
+    const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
+    const admin = usuarios.find(u => u.usuario === 'admin')
+    if (!admin) return false
+    const senhaH = await hashSenha(senha)
+    return isHash(admin.senha) ? admin.senha === senhaH : admin.senha === senha
+  }, [state.usuarios])
+
+  const criarUsuario = useCallback(async (dados) => {
     if (state.usuarios.some(u => u.usuario === dados.usuario)) { toast('Usuário já existe.', 'err'); return false }
     const avatar = dados.nome.split(' ').filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || dados.usuario.slice(0, 2).toUpperCase()
-    const novoUser = { ...dados, avatar }
+    const senhaH = await hashSenha(dados.senha)
+    const novoUser = { ...dados, senha: senhaH, avatar }
+    try {
+      await sb.salvarUsuario(novoUser)
+    } catch { toast('Erro ao salvar usuário na nuvem.', 'warn') }
     const lista = [...state.usuarios, novoUser]
     dispatch({ type: 'SET_USUARIOS', payload: lista })
     toast('Usuário criado.', 'ok')
     return true
   }, [state.usuarios, toast])
 
-  const excluirUsuario = useCallback((login) => {
+  const excluirUsuario = useCallback(async (login) => {
     if (login === 'admin') return
     const lista = state.usuarios.filter(u => u.usuario !== login)
     dispatch({ type: 'SET_USUARIOS', payload: lista })
+    try { await sb.deletarUsuario(login) } catch {}
     toast('Usuário excluído.', 'ok')
   }, [state.usuarios, toast])
 
+  const criarFilial = useCallback((dados) => {
+    if (!dados.id || !dados.nome) { toast('Preencha ID e nome da filial.', 'err'); return false }
+    if (state.filiais.some(f => f.id === dados.id)) { toast('ID de filial já existe.', 'err'); return false }
+    const nova = { id: dados.id, nome: dados.nome, cidade: dados.cidade || '', estado: dados.estado || '' }
+    dispatch({ type: 'SET_FILIAIS', payload: [...state.filiais, nova] })
+    toast(`Filial "${nova.nome}" criada.`, 'ok')
+    return true
+  }, [state.filiais, toast])
+
   /* ─── Estadias lançadas ───────────────────────────────── */
   const adicionarLancada = useCallback(async (item) => {
-    const novo = { ...item, id: gerarId(), status: 'Aberto', lancadoPor: state.usuarioAtual?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
+    const novo = { ...item, id: gerarId(), filial: state.usuarioAtual?.filial || 'principal', status: 'Aberto', lancadoPor: state.usuarioAtual?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
     const lista = [novo, ...state.estadias]
     dispatch({ type: 'SET_ESTADIAS', payload: lista })
     const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou estadia lançada', detalhes: `Placa ${novo.placa} | ${novo.valor}` }, ...state.historico].slice(0, 300)
@@ -328,7 +379,7 @@ export function AppProvider({ children }) {
       const up = await uploadAnexoItem(file)
       if (up) anexos.push(up)
     }
-    const novo = { ...dados, id: gerarId(), anexos, status: 'A lançar', criadoPor: state.usuarioAtual?.usuario || '-', dataCriacao: new Date().toLocaleString('pt-BR') }
+    const novo = { ...dados, id: gerarId(), anexos, filial: state.usuarioAtual?.filial || 'principal', status: 'A lançar', criadoPor: state.usuarioAtual?.usuario || '-', dataCriacao: new Date().toLocaleString('pt-BR') }
     const lista = [novo, ...state.estadiasALancar]
     dispatch({ type: 'SET_A_LANCAR', payload: lista })
     const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou pendência', detalhes: `Placa ${novo.placa}` }, ...state.historico].slice(0, 300)
@@ -343,10 +394,28 @@ export function AppProvider({ children }) {
     const lista = state.estadiasALancar.filter(e => String(e.id) !== String(id))
     dispatch({ type: 'SET_A_LANCAR', payload: lista })
     dispatch({ type: 'SET_ABA', payload: 'lancadas' })
+    dispatch({ type: 'SET_ITEM_LANCAR', payload: item })
     await deletarNuvem(id)
-    toast('Placa aberta no formulário de lançamento.', 'ok')
-    return item
+    toast('Preencha os dados e salve a estadia.', 'ok')
   }, [state.estadiasALancar, deletarNuvem, toast])
+
+  const limparItemParaLancar = useCallback(() => {
+    dispatch({ type: 'SET_ITEM_LANCAR', payload: null })
+  }, [])
+
+  const editarLancada = useCallback(async (id, dados) => {
+    const calc = calcularEstadia(dados.peso, dados.chegadaData, dados.chegadaHora, dados.saidaData, dados.saidaHora)
+    if (!calc) { toast('Verifique peso, chegada e saída.', 'err'); return }
+    const existente = state.estadias.find(e => String(e.id) === String(id))
+    const item = { ...existente, ...dados, ...calc }
+    const lista = state.estadias.map(e => String(e.id) === String(id) ? item : e)
+    dispatch({ type: 'SET_ESTADIAS', payload: lista })
+    const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Editou estadia', detalhes: `Placa ${item.placa}` }, ...state.historico].slice(0, 300)
+    dispatch({ type: 'SET_HISTORICO', payload: hist })
+    feed('Estadia editada', `Placa ${item.placa} atualizada.`, '✏️')
+    toast('Estadia atualizada.', 'ok')
+    await salvarNuvem(item, 'lancada')
+  }, [state.estadias, state.historico, state.usuarioAtual, salvarNuvem, toast, feed])
 
   const excluirALancar = useCallback(async (id) => {
     const lista = state.estadiasALancar.filter(e => String(e.id) !== String(id))
@@ -394,12 +463,14 @@ export function AppProvider({ children }) {
     supabaseOnline: supabaseOnline.current,
     toast,
     feed,
-    entrar, logout, criarUsuario, excluirUsuario,
+    entrar, logout, criarUsuario, excluirUsuario, verificarSenhaAdmin, criarFilial,
     adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada,
     adicionarALancar, abrirParaLancar, excluirALancar,
     limparHistorico, exportarBackup, importarBackup, exportarCSV,
     mudarAba, alternarTema, alternarSom,
     conectarSupabase, sincronizarFila,
+    editarLancada, limparItemParaLancar,
+    uploadAnexoItem,
     dataISOTexto,
   }
 

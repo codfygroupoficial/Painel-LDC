@@ -4,14 +4,14 @@ import Loader from './components/Loader'
 import Login from './components/Login'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
-import StatsBar from './components/StatsBar'
 import LivePanel from './components/LivePanel'
-import HeroSection from './components/HeroSection'
 import Toast from './components/Toast'
+import Dashboard from './pages/Dashboard'
 import EstadiaLancada from './pages/EstadiaLancada'
 import EstadiaALancar from './pages/EstadiaALancar'
 import Historico from './pages/Historico'
 import Backup from './pages/Backup'
+import Admin from './pages/Admin'
 
 function Painel() {
   const { abaAtiva, mudarAba } = useApp()
@@ -59,18 +59,14 @@ function Painel() {
           <Header onMenuMobile={() => setSidebarOpen(true)} />
 
           <main className="container">
-            <HeroSection
-              onNovaLancada={focarLancada}
-              onNovaPendencia={focarALancar}
-              onComandos={() => setShowCommand(true)}
-            />
             <LivePanel />
-            <StatsBar />
 
+            {abaAtiva === 'inicio' && <Dashboard onNovaLancada={focarLancada} onNovaPendencia={focarALancar} />}
             {abaAtiva === 'lancadas' && <EstadiaLancada formRef={formLancadaRef} />}
             {abaAtiva === 'alancar' && <EstadiaALancar formRef={formALancarRef} />}
             {abaAtiva === 'historico' && <Historico />}
             {abaAtiva === 'backup' && <Backup />}
+            {abaAtiva === 'admin' && <Admin />}
 
             <div className="footer">by Manoel</div>
           </main>
