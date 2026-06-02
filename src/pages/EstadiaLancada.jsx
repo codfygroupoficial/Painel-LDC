@@ -25,7 +25,7 @@ function classeStatus(s) {
 }
 
 export default function EstadiaLancada({ formRef }) {
-  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais, dataISOTexto: iso } = useApp()
+  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais } = useApp()
   const [form, setForm] = useState(EMPTY)
   const [editandoId, setEditandoId] = useState(null)
   const [arquivos, setArquivos] = useState([])
@@ -51,7 +51,7 @@ export default function EstadiaLancada({ formRef }) {
     setArquivos([])
     limparItemParaLancar()
     formRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [itemParaLancar])
+  }, [itemParaLancar]) // eslint-disable-line
 
   const handleEditar = (e) => {
     setEditandoId(e.id)
@@ -113,7 +113,6 @@ export default function EstadiaLancada({ formRef }) {
 
   return (
     <section className="aba active" id="abaLancadas">
-      {/* Formulário */}
       <div className="box" ref={formRef}>
         <div className="box-title">
           <h2>{editandoId ? 'Editar estadia' : 'Adicionar estadia lançada'}</h2>
@@ -165,21 +164,22 @@ export default function EstadiaLancada({ formRef }) {
             </select>
           </div>
 
-          {[
-            ['chegadaData', 'chegadaHora', 'Data chegada', 'Hora chegada'],
-            ['saidaData', 'saidaHora', 'Data saída', 'Hora saída'],
-          ].map(([kd, kh, ld, lh]) => (
-            <>
-              <div key={kd} className="field">
-                <label>{ld}</label>
-                <input type="date" value={form[kd]} onChange={e => set(kd, e.target.value)} />
-              </div>
-              <div key={kh} className="field">
-                <label>{lh}</label>
-                <input type="time" value={form[kh]} onChange={e => set(kh, e.target.value)} />
-              </div>
-            </>
-          ))}
+          <div className="field">
+            <label>Data chegada</label>
+            <input type="date" value={form.chegadaData} onChange={e => set('chegadaData', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Hora chegada</label>
+            <input type="time" value={form.chegadaHora} onChange={e => set('chegadaHora', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Data saída</label>
+            <input type="date" value={form.saidaData} onChange={e => set('saidaData', e.target.value)} />
+          </div>
+          <div className="field">
+            <label>Hora saída</label>
+            <input type="time" value={form.saidaHora} onChange={e => set('saidaHora', e.target.value)} />
+          </div>
 
           <DropZone arquivos={arquivos} onChange={setArquivos} />
 
@@ -218,7 +218,6 @@ export default function EstadiaLancada({ formRef }) {
         </div>
       </div>
 
-      {/* Filtros */}
       <div className="box">
         <div className="box-title">
           <h2>Consultar estadias lançadas</h2>
@@ -239,7 +238,6 @@ export default function EstadiaLancada({ formRef }) {
         </div>
       </div>
 
-      {/* Tabela */}
       <div className="table-wrap">
         <div className="table-scroll">
           <table>
