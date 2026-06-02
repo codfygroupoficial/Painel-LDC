@@ -332,6 +332,12 @@ export function AppProvider({ children }) {
     return true
   }, [state.filiais, toast])
 
+  const excluirFilial = useCallback((id) => {
+    if (id === 'rondonopolis-mt') { toast('Filial padrão não pode ser excluída.', 'err'); return }
+    dispatch({ type: 'SET_FILIAIS', payload: state.filiais.filter(f => f.id !== id) })
+    toast('Filial removida.', 'ok')
+  }, [state.filiais, toast])
+
   /* ─── Estadias lançadas ───────────────────────────────── */
   const adicionarLancada = useCallback(async (item) => {
     const novo = { ...item, id: gerarId(), filial: state.usuarioAtual?.filial || 'principal', status: 'Aberto', lancadoPor: state.usuarioAtual?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
@@ -463,7 +469,7 @@ export function AppProvider({ children }) {
     supabaseOnline: supabaseOnline.current,
     toast,
     feed,
-    entrar, logout, criarUsuario, excluirUsuario, verificarSenhaAdmin, criarFilial,
+    entrar, logout, criarUsuario, excluirUsuario, verificarSenhaAdmin, criarFilial, excluirFilial,
     adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada,
     adicionarALancar, abrirParaLancar, excluirALancar,
     limparHistorico, exportarBackup, importarBackup, exportarCSV,

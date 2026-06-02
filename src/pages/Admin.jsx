@@ -5,7 +5,7 @@ import { nomeFilial } from '../data/filiais'
 import { useApp } from '../context/AppContext'
 
 export default function Admin() {
-  const { criarUsuario, usuarios, excluirUsuario, filiais, criarFilial } = useApp()
+  const { criarUsuario, usuarios, excluirUsuario, filiais, criarFilial, excluirFilial } = useApp()
   const [rows, setRows] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [filialFiltro, setFilialFiltro] = useState('')
@@ -247,31 +247,52 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Adicionar filial */}
+      {/* Gerenciar filiais */}
       <div className="box">
         <div className="box-title">
-          <h2>🏭 Adicionar filial</h2>
-          <span>Novas filiais são adicionadas via código</span>
+          <h2>🏭 Gerenciar filiais</h2>
+          <span>{filiais.length} filial(is) cadastrada(s)</span>
         </div>
-        <div className="form-grid">
-          <div className="field">
-            <label>ID da filial</label>
-            <input value={novaFilial.id} onChange={e => setNovaFilial(p => ({ ...p, id: e.target.value.toLowerCase().replace(/\s/g, '-') }))} placeholder="ex: sorriso-mt" />
-          </div>
-          <div className="field">
-            <label>Nome</label>
-            <input value={novaFilial.nome} onChange={e => setNovaFilial(p => ({ ...p, nome: e.target.value }))} placeholder="ex: Via Log Sorriso" />
-          </div>
-          <div className="field">
-            <label>Cidade</label>
-            <input value={novaFilial.cidade} onChange={e => setNovaFilial(p => ({ ...p, cidade: e.target.value }))} placeholder="ex: Sorriso" />
-          </div>
-          <div className="field">
-            <label>Estado</label>
-            <input value={novaFilial.estado} onChange={e => setNovaFilial(p => ({ ...p, estado: e.target.value.toUpperCase().slice(0, 2) }))} placeholder="MT" maxLength={2} />
-          </div>
+
+        {/* Lista de filiais existentes */}
+        <div style={{ marginBottom: 16 }}>
+          {filiais.map(f => (
+            <div key={f.id} className="online-user-pill" style={{ marginBottom: 8 }}>
+              <div className="online-user-left">
+                <div>
+                  <strong>{f.nome}</strong>
+                  <small>{f.cidade}{f.estado ? ` — ${f.estado}` : ''} • <code style={{ fontSize: 11 }}>{f.id}</code></small>
+                </div>
+              </div>
+              {f.id !== 'rondonopolis-mt' && (
+                <button className="btn-red btn-small" onClick={() => confirm(`Excluir filial "${f.nome}"?`) && excluirFilial(f.id)}>Excluir</button>
+              )}
+            </div>
+          ))}
         </div>
-        <button className="btn-purple" onClick={handleAdicionarFilial}>Gerar configuração</button>
+
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 12 }}>Adicionar nova filial:</p>
+          <div className="form-grid">
+            <div className="field">
+              <label>ID da filial</label>
+              <input value={novaFilial.id} onChange={e => setNovaFilial(p => ({ ...p, id: e.target.value.toLowerCase().replace(/\s/g, '-') }))} placeholder="ex: sorriso-mt" />
+            </div>
+            <div className="field">
+              <label>Nome</label>
+              <input value={novaFilial.nome} onChange={e => setNovaFilial(p => ({ ...p, nome: e.target.value }))} placeholder="ex: Via Log Sorriso" />
+            </div>
+            <div className="field">
+              <label>Cidade</label>
+              <input value={novaFilial.cidade} onChange={e => setNovaFilial(p => ({ ...p, cidade: e.target.value }))} placeholder="ex: Sorriso" />
+            </div>
+            <div className="field">
+              <label>Estado</label>
+              <input value={novaFilial.estado} onChange={e => setNovaFilial(p => ({ ...p, estado: e.target.value.toUpperCase().slice(0, 2) }))} placeholder="MT" maxLength={2} />
+            </div>
+          </div>
+          <button className="btn-purple" onClick={handleAdicionarFilial}>Adicionar filial</button>
+        </div>
       </div>
 
     </section>
