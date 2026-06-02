@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const URL = import.meta.env.VITE_SUPABASE_URL
-const KEY = import.meta.env.VITE_SUPABASE_KEY
+const URL = import.meta.env.VITE_SUPABASE_URL || 'https://qzjwjylpbmnggczrbgoe.supabase.co'
+const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_om8iQIEuLHPQpxgXCOqLgw_xOGyCko_'
 export const TABLE = 'ldc_estadias'
 export const USUARIOS_TABLE = 'ldc_usuarios'
 export const BUCKET = 'ldc-anexos'
