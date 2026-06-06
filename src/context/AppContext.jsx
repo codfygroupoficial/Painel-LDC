@@ -21,6 +21,7 @@ const initialState = {
   estadias: load('estadias', []),
   estadiasALancar: load('estadiasALancar', []),
   historico: load('historicoEstadias', []),
+  captacoes: load('captacoesViaLog', []),
   abaAtiva: 'inicio',
   itemParaLancar: null,
   tema: load('temaPainelViaLog', 'dark'),
@@ -42,6 +43,7 @@ function reducer(state, action) {
     case 'SET_ESTADIAS': return { ...state, estadias: action.payload }
     case 'SET_A_LANCAR': return { ...state, estadiasALancar: action.payload }
     case 'SET_HISTORICO': return { ...state, historico: action.payload }
+    case 'SET_CAPTACOES': return { ...state, captacoes: action.payload }
     case 'SET_ABA': return { ...state, abaAtiva: action.payload }
     case 'SET_ITEM_LANCAR': return { ...state, itemParaLancar: action.payload }
     case 'SET_TEMA': return { ...state, tema: action.payload }
@@ -91,7 +93,8 @@ export function AppProvider({ children }) {
     localStorage.setItem('estadias', JSON.stringify(state.estadias))
     localStorage.setItem('estadiasALancar', JSON.stringify(state.estadiasALancar))
     localStorage.setItem('historicoEstadias', JSON.stringify(state.historico))
-  }, [state.usuarios, state.filiais, state.estadias, state.estadiasALancar, state.historico])
+    localStorage.setItem('captacoesViaLog', JSON.stringify(state.captacoes))
+  }, [state.usuarios, state.filiais, state.estadias, state.estadiasALancar, state.historico, state.captacoes])
 
   useEffect(() => {
     localStorage.setItem('temaPainelViaLog', state.tema)
@@ -418,6 +421,28 @@ export function AppProvider({ children }) {
     baixarArquivo('estadias-ldc.csv', [header, ...rows].join('\n'), 'text/csv;charset=utf-8')
   }, [state.estadias])
 
+  const adicionarCaptacao = useCallback((dados) => {
+    const nova = {
+      ...dados,
+      id: gerarId(),
+      captadoPor: state.usuarioAtual?.usuario || '-',
+      carregou: false,
+      data: new Date().toLocaleString('pt-BR'),
+      filial: state.usuarioAtual?.filial || 'principal',
+    }
+    dispatch({ type: 'SET_CAPTACOES', payload: [nova, ...state.captacoes] })
+    toast('Contato salvo.', 'ok')
+  }, [state.captacoes, state.usuarioAtual, toast])
+
+  const marcarCarregou = useCallback((id) => {
+    dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.map(c => String(c.id) === String(id) ? { ...c, carregou: !c.carregou } : c) })
+  }, [state.captacoes])
+
+  const excluirCaptacao = useCallback((id) => {
+    dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.filter(c => String(c.id) !== String(id)) })
+    toast('Contato excluído.', 'ok')
+  }, [state.captacoes, toast])
+
   const mudarAba = useCallback((aba) => dispatch({ type: 'SET_ABA', payload: aba }), [])
   const alternarTema = useCallback(() => dispatch({ type: 'SET_TEMA', payload: state.tema === 'light' ? 'dark' : 'light' }), [state.tema])
   const alternarSom = useCallback(() => dispatch({ type: 'SET_SOM', payload: !state.somAtivo }), [state.somAtivo])
@@ -434,6 +459,7 @@ export function AppProvider({ children }) {
     conectarSupabase, sincronizarFila,
     editarLancada, limparItemParaLancar,
     uploadAnexoItem, dataISOTexto,
+    adicionarCaptacao, marcarCarregou, excluirCaptacao,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
