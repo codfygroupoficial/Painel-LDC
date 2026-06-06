@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard'
 import EstadiaLancada from './pages/EstadiaLancada'
 import EstadiaALancar from './pages/EstadiaALancar'
 import Historico from './pages/Historico'
+import Captacao from './pages/Captacao'
 import Backup from './pages/Backup'
 import Admin from './pages/Admin'
 
@@ -69,6 +70,7 @@ function Painel() {
             {abaAtiva === 'inicio' && <Dashboard onNovaLancada={focarLancada} onNovaPendencia={focarALancar} />}
             {abaAtiva === 'lancadas' && <EstadiaLancada formRef={formLancadaRef} />}
             {abaAtiva === 'alancar' && <EstadiaALancar formRef={formALancarRef} />}
+            {abaAtiva === 'captacao' && <Captacao />}
             {abaAtiva === 'historico' && <Historico />}
             {abaAtiva === 'backup' && <Backup />}
             {abaAtiva === 'admin' && <Admin />}
