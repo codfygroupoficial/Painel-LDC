@@ -159,11 +159,11 @@ export function AppProvider({ children }) {
       setCloud('online', 'Salvo automaticamente.')
     } catch {
       supabaseOnline.current = false
-      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo) }]
+      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo, filial) }]
       dispatch({ type: 'SET_FILA', payload: fila })
       setCloud('offline', 'Falhou. Guardado na fila offline.')
     }
-  }, [state.filaNuvem, setCloud])
+  }, [state.filaNuvem, state.usuarioAtual, setCloud])
 
   const deletarNuvem = useCallback(async (id) => {
     if (!supabaseOnline.current || !navigator.onLine) {
@@ -211,7 +211,7 @@ export function AppProvider({ children }) {
       recebendoNuvem.current = false
       if (aviso) toast('Dados baixados da nuvem.', 'ok')
     } catch { recebendoNuvem.current = false }
-  }, [toast])
+  }, [toast, state.usuarioAtual])
 
   const conectarSupabase = useCallback(async () => {
     if (!navigator.onLine) { setCloud('offline', 'Sem internet.'); return }
