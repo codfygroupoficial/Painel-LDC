@@ -426,7 +426,7 @@ export function AppProvider({ children }) {
       ...dados,
       id: gerarId(),
       captadoPor: state.usuarioAtual?.usuario || '-',
-      carregou: false,
+      status: 'contatado',
       data: new Date().toLocaleString('pt-BR'),
       filial: state.usuarioAtual?.filial || 'principal',
     }
@@ -434,10 +434,17 @@ export function AppProvider({ children }) {
     toast('Contato salvo.', 'ok')
   }, [state.captacoes, state.usuarioAtual, toast])
 
+  const atualizarStatusCaptacao = useCallback((id, novoStatus) => {
+    dispatch({
+      type: 'SET_CAPTACOES',
+      payload: state.captacoes.map(c => String(c.id) === String(id) ? { ...c, status: novoStatus } : c),
+    })
+  }, [state.captacoes])
+
   const marcarCarregou = useCallback((id) => {
     dispatch({
       type: 'SET_CAPTACOES',
-      payload: state.captacoes.map(c => String(c.id) === String(id) ? { ...c, carregou: !c.carregou } : c),
+      payload: state.captacoes.map(c => String(c.id) === String(id) ? { ...c, status: c.status === 'carregou' ? 'contatado' : 'carregou' } : c),
     })
   }, [state.captacoes])
 
@@ -458,7 +465,7 @@ export function AppProvider({ children }) {
     adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada,
     adicionarALancar, abrirParaLancar, excluirALancar,
     limparHistorico, exportarBackup, importarBackup, exportarCSV,
-    adicionarCaptacao, marcarCarregou, excluirCaptacao,
+    adicionarCaptacao, atualizarStatusCaptacao, marcarCarregou, excluirCaptacao,
     mudarAba, alternarTema, alternarSom,
     conectarSupabase, sincronizarFila,
     editarLancada, limparItemParaLancar,

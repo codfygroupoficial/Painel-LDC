@@ -1,302 +1,459 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import ConfirmDialog from '../components/ConfirmDialog'
+import {
+  Phone, ClipboardCheck, PackageCheck, Plus, X, ChevronRight,
+  Truck, MapPin, Package, Users, Search, Wheat, TrendingUp,
+} from 'lucide-react'
 
-const EMPTY = { nome: '', telefone: '', empresa: '', tipo: 'Motorista', obs: '' }
-
-function medalha(pos) {
-  if (pos === 0) return { icon: '🥇', cor: '#f59e0b' }
-  if (pos === 1) return { icon: '🥈', cor: '#94a3b8' }
-  if (pos === 2) return { icon: '🥉', cor: '#b45309' }
-  return { icon: `#${pos + 1}`, cor: 'var(--muted)' }
+const STATUS = {
+  contatado: { label: 'Contatado',   cor: '#64748b', bg: 'rgba(100,116,139,.10)', border: 'rgba(100,116,139,.2)', Icon: Phone,          ordem: 1, next: 'ordem' },
+  ordem:     { label: 'Pegou ordem', cor: '#d97706', bg: 'rgba(217,119,6,.10)',   border: 'rgba(217,119,6,.2)',   Icon: ClipboardCheck,  ordem: 2, next: 'carregou' },
+  carregou:  { label: 'Carregou',    cor: '#16a34a', bg: 'rgba(22,163,74,.10)',   border: 'rgba(22,163,74,.2)',   Icon: PackageCheck,    ordem: 3, next: null },
 }
 
-export default function Captacao() {
-  const { captacoes, adicionarCaptacao, marcarCarregou, excluirCaptacao, usuarioAtual, toast } = useApp()
-  const isAdmin = usuarioAtual?.cargo === 'Admin'
-  const [form, setForm] = useState(EMPTY)
-  const [confirmExcluir, setConfirmExcluir] = useState(null)
-  const [busca, setBusca] = useState('')
+const OPERACOES = ['Farelo', 'Soja', 'Milho', 'Óleo', 'Fertilizante', 'Outro']
 
+const EMPTY = {
+  motorista: '', telefone: '', placa: '', produto: 'Farelo',
+  origem: '', destino: '', cidadeMotorista: '', qtdCargas: '', obs: '',
+}
+
+const limparTel = (t) => t.replace(/\D/g, '')
+
+function medalha(i) {
+  if (i === 0) return { icon: '🥇', cor: '#f59e0b' }
+  if (i === 1) return { icon: '🥈', cor: '#94a3b8' }
+  if (i === 2) return { icon: '🥉', cor: '#b45309' }
+  return { icon: `#${i + 1}`, cor: 'var(--muted)' }
+}
+
+/* ── Stat card ─────────────────────────────────────── */
+function StatCard({ Icon, color, value, label, sub }) {
+  return (
+    <div style={{
+      background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 18,
+      padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 14,
+      boxShadow: '0 2px 10px rgba(15,23,42,.05)', transition: 'transform .2s, box-shadow .2s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(15,23,42,.10)' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 10px rgba(15,23,42,.05)' }}
+    >
+      <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={20} color={color} />
+      </div>
+      <div>
+        <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-1px', lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.6px', marginTop: 3 }}>{label}</div>
+        {sub && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{sub}</div>}
+      </div>
+    </div>
+  )
+}
+
+/* ── Status badge ──────────────────────────────────── */
+function StatusBadge({ status }) {
+  const s = STATUS[status] || STATUS.contatado
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      background: s.bg, color: s.cor, border: `1px solid ${s.border}`,
+      borderRadius: 8, padding: '4px 10px', fontSize: 11.5, fontWeight: 700,
+    }}>
+      <s.Icon size={11} />
+      {s.label}
+    </span>
+  )
+}
+
+/* ── Captação card ─────────────────────────────────── */
+function CardCaptacao({ c, onAvancar, onExcluir, isAdmin }) {
+  const s = STATUS[c.status] || STATUS.contatado
+  const tel = limparTel(c.telefone || '')
+
+  return (
+    <div style={{
+      background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 16,
+      padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10,
+      boxShadow: '0 1px 6px rgba(15,23,42,.04)', transition: 'box-shadow .2s',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14, flexShrink: 0 }}>
+            {(c.motorista || '?').slice(0, 2).toUpperCase()}
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontWeight: 800, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.motorista || '–'}</div>
+            {tel && (
+              <a href={`https://wa.me/55${tel}`} target="_blank" rel="noopener noreferrer"
+                style={{ color: '#22c55e', fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Phone size={10} />
+                {c.telefone}
+              </a>
+            )}
+          </div>
+        </div>
+        <StatusBadge status={c.status} />
+      </div>
+
+      {/* Info row */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {c.placa && (
+          <span style={{ background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 6, padding: '3px 8px', fontFamily: 'monospace', fontWeight: 800, fontSize: 12 }}>
+            {c.placa.toUpperCase()}
+          </span>
+        )}
+        {c.produto && (
+          <span style={{ background: 'rgba(37,99,235,.08)', color: '#2563eb', borderRadius: 6, padding: '3px 9px', fontWeight: 700, fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Wheat size={10} />
+            {c.produto}
+          </span>
+        )}
+        {c.qtdCargas && (
+          <span style={{ background: 'rgba(124,58,237,.08)', color: '#7c3aed', borderRadius: 6, padding: '3px 9px', fontWeight: 700, fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Package size={10} />
+            {c.qtdCargas}x
+          </span>
+        )}
+        {(c.origem || c.destino) && (
+          <span style={{ color: 'var(--muted)', fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 3 }}>
+            <MapPin size={10} />
+            {c.origem}{c.origem && c.destino ? ' → ' : ''}{c.destino}
+          </span>
+        )}
+      </div>
+
+      {c.obs && (
+        <div style={{ background: 'rgba(245,158,11,.06)', border: '1px solid rgba(245,158,11,.18)', borderRadius: 8, padding: '6px 10px', fontSize: 12, color: '#92400e' }}>
+          ⚠ {c.obs}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTop: '1px solid var(--line)' }}>
+        <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+          {isAdmin && c.captadoPor && <span>por <strong>{c.captadoPor}</strong> · </span>}
+          {c.data?.slice(0, 10)}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {isAdmin && (
+            <button onClick={() => onExcluir(c.id)} style={{
+              background: 'rgba(220,38,38,.08)', color: '#dc2626', border: '1px solid rgba(220,38,38,.15)',
+              borderRadius: 8, padding: '5px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              boxShadow: 'none',
+            }}>Excluir</button>
+          )}
+          {s.next && (
+            <button onClick={() => onAvancar(c.id, s.next)} style={{
+              background: STATUS[s.next].cor, color: 'white', border: 'none',
+              borderRadius: 8, padding: '5px 12px', fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 4,
+              boxShadow: `0 4px 14px ${STATUS[s.next].cor}40`,
+            }}>
+              {STATUS[s.next].label} <ChevronRight size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Modal form ────────────────────────────────────── */
+function Modal({ form, setForm, onSalvar, onFechar }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(2,6,23,.6)', backdropFilter: 'blur(8px)',
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      padding: '0 0 0 0',
+    }} onClick={e => e.target === e.currentTarget && onFechar()}>
+      <div style={{
+        width: '100%', maxWidth: 560, background: 'var(--card)',
+        borderRadius: '24px 24px 0 0', padding: '24px 24px 32px',
+        boxShadow: '0 -20px 60px rgba(0,0,0,.25)',
+        animation: 'slideUp .25s cubic-bezier(.22,1,.36,1)',
+        maxHeight: '92vh', overflowY: 'auto',
+      }}>
+        {/* handle */}
+        <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--line)', margin: '0 auto 20px' }} />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <div>
+            <h2 style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-.4px' }}>Novo motorista captado</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 12.5, marginTop: 3 }}>Registre os dados do contato</p>
+          </div>
+          <button onClick={onFechar} style={{ background: 'var(--bg)', border: '1px solid var(--line)', borderRadius: 10, padding: 8, boxShadow: 'none', color: 'var(--muted)' }}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label>Motorista *</label>
+            <input value={form.motorista} onChange={e => set('motorista', e.target.value)} placeholder="Nome completo" />
+          </div>
+          <div>
+            <label>Telefone / WhatsApp *</label>
+            <input value={form.telefone} onChange={e => set('telefone', e.target.value.replace(/\D/g, ''))} placeholder="64999999999" inputMode="numeric" />
+          </div>
+          <div>
+            <label>Placa do veículo</label>
+            <input value={form.placa} onChange={e => set('placa', e.target.value.toUpperCase())} placeholder="ABC1234" maxLength={8} />
+          </div>
+          <div>
+            <label>Produto</label>
+            <select value={form.produto} onChange={e => set('produto', e.target.value)}>
+              {OPERACOES.map(o => <option key={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <label>Qtd de cargas</label>
+            <input value={form.qtdCargas} onChange={e => set('qtdCargas', e.target.value)} placeholder="Ex: 1" inputMode="numeric" />
+          </div>
+          <div>
+            <label>Origem</label>
+            <input value={form.origem} onChange={e => set('origem', e.target.value)} placeholder="Cidade origem" />
+          </div>
+          <div>
+            <label>Destino</label>
+            <input value={form.destino} onChange={e => set('destino', e.target.value)} placeholder="Cidade destino" />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label>Cidade do motorista</label>
+            <input value={form.cidadeMotorista} onChange={e => set('cidadeMotorista', e.target.value)} placeholder="De onde o motorista está" />
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label>Observação</label>
+            <input value={form.obs} onChange={e => set('obs', e.target.value)} placeholder="Ex: prefere manhã, tem baú..." />
+          </div>
+        </div>
+
+        <button className="btn-blue btn-full" onClick={onSalvar} style={{ marginTop: 20, padding: '13px 16px', fontSize: 14 }}>
+          <Plus size={16} /> Salvar captação
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Ranking admin ─────────────────────────────────── */
+function RankingAdmin({ captacoes }) {
+  const byOp = {}
+  const byProd = {}
+  for (const c of captacoes) {
+    const op = c.captadoPor || '?'
+    const pr = c.produto || 'Outro'
+    if (!byOp[op]) byOp[op] = { total: 0, carregou: 0 }
+    if (!byProd[pr]) byProd[pr] = 0
+    byOp[op].total++
+    byProd[pr]++
+    if (c.status === 'carregou' || c.carregou) byOp[op].carregou++
+  }
+  const rankOp = Object.entries(byOp).map(([nome, s]) => ({ nome, ...s })).sort((a, b) => b.total - a.total)
+  const rankProd = Object.entries(byProd).map(([nome, cnt]) => ({ nome, cnt })).sort((a, b) => b.cnt - a.cnt)
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 16 }}>
+      {/* Ranking operadores */}
+      <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 10px rgba(15,23,42,.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
+          <div>
+            <h2 style={{ fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}><Users size={15} /> Ranking operadores</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>Quem mais captou</p>
+          </div>
+        </div>
+        {rankOp.length === 0
+          ? <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>Nenhuma captação ainda.</p>
+          : rankOp.map((r, i) => {
+            const m = medalha(i)
+            const taxa = r.total ? Math.round(r.carregou / r.total * 100) : 0
+            return (
+              <div key={r.nome} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < rankOp.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div style={{ width: 32, textAlign: 'center', fontSize: i < 3 ? 20 : 12, fontWeight: 900, color: m.cor, flexShrink: 0 }}>{m.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{r.nome}</div>
+                  <div style={{ height: 4, borderRadius: 2, background: 'var(--line)', marginTop: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${taxa}%`, background: taxa >= 60 ? '#16a34a' : taxa >= 30 ? '#d97706' : '#64748b', borderRadius: 2, transition: 'width .4s' }} />
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: m.cor }}>{r.total}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase' }}>captados</div>
+                </div>
+              </div>
+            )
+          })}
+      </div>
+
+      {/* Ranking produtos */}
+      <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 18, padding: '18px 20px', boxShadow: '0 2px 10px rgba(15,23,42,.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 12, borderBottom: '1px solid var(--line)' }}>
+          <div>
+            <h2 style={{ fontSize: 15, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}><Wheat size={15} /> Ranking produtos</h2>
+            <p style={{ color: 'var(--muted)', fontSize: 12, marginTop: 2 }}>Mais carregados</p>
+          </div>
+        </div>
+        {rankProd.length === 0
+          ? <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>Nenhum produto ainda.</p>
+          : rankProd.map((r, i) => {
+            const m = medalha(i)
+            const pct = rankProd[0]?.cnt ? Math.round(r.cnt / rankProd[0].cnt * 100) : 0
+            return (
+              <div key={r.nome} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < rankProd.length - 1 ? '1px solid var(--line)' : 'none' }}>
+                <div style={{ width: 32, textAlign: 'center', fontSize: i < 3 ? 20 : 12, fontWeight: 900, color: m.cor, flexShrink: 0 }}>{m.icon}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{r.nome}</div>
+                  <div style={{ height: 4, borderRadius: 2, background: 'var(--line)', marginTop: 4, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, background: '#2563eb', borderRadius: 2, transition: 'width .4s' }} />
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div style={{ fontSize: 20, fontWeight: 900, color: m.cor }}>{r.cnt}</div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase' }}>contatos</div>
+                </div>
+              </div>
+            )
+          })}
+      </div>
+    </div>
+  )
+}
+
+/* ── Main ─────────────────────────────────────────── */
+export default function Captacao() {
+  const { captacoes, adicionarCaptacao, atualizarStatusCaptacao, marcarCarregou, excluirCaptacao, usuarioAtual, toast } = useApp()
+  const isAdmin = usuarioAtual?.cargo === 'Admin'
+  const [form, setForm] = useState(EMPTY)
+  const [modal, setModal] = useState(false)
+  const [busca, setBusca] = useState('')
+  const [filtroStatus, setFiltroStatus] = useState('todos')
+
+  const getStatus = (c) => {
+    if (c.status) return c.status
+    if (c.carregou) return 'carregou'
+    return 'contatado'
+  }
+
   const handleSalvar = () => {
-    if (!form.nome.trim() || !form.telefone.trim()) {
-      toast('Preencha nome e telefone.', 'err'); return
+    if (!form.motorista.trim() || !form.telefone.trim()) {
+      toast('Preencha motorista e telefone.', 'err'); return
     }
     adicionarCaptacao(form)
     setForm(EMPTY)
+    setModal(false)
   }
 
-  /* ── ranking ── */
-  const ranking = () => {
-    const map = {}
-    for (const c of captacoes) {
-      const u = c.captadoPor || 'desconhecido'
-      if (!map[u]) map[u] = { total: 0, carregou: 0 }
-      map[u].total++
-      if (c.carregou) map[u].carregou++
+  const handleAvancar = (id, novoStatus) => {
+    if (atualizarStatusCaptacao) {
+      atualizarStatusCaptacao(id, novoStatus)
+    } else {
+      marcarCarregou(id)
     }
-    return Object.entries(map)
-      .map(([nome, s]) => ({ nome, ...s }))
-      .sort((a, b) => b.total - a.total)
   }
 
-  const lista = captacoes.filter(c => {
-    const txt = `${c.nome} ${c.empresa} ${c.telefone}`.toUpperCase()
-    return !busca || txt.includes(busca.toUpperCase())
+  const minhas = isAdmin ? captacoes : captacoes.filter(c => c.captadoPor === usuarioAtual?.usuario)
+
+  const lista = minhas.filter(c => {
+    const s = getStatus(c)
+    const txt = `${c.motorista} ${c.telefone} ${c.placa} ${c.produto} ${c.origem} ${c.destino}`.toUpperCase()
+    const matchBusca = !busca || txt.includes(busca.toUpperCase())
+    const matchStatus = filtroStatus === 'todos' || s === filtroStatus
+    return matchBusca && matchStatus
   })
 
-  /* ── VIEW OPERADOR ── */
-  const viewOperador = (
-    <>
-      {/* Form */}
-      <div className="box">
-        <div className="box-title">
-          <h2>Novo contato captado</h2>
-          <span>Registre motoristas e transportadoras para contato</span>
-        </div>
-        <div className="form-grid">
-          <div className="field">
-            <label>Nome</label>
-            <input value={form.nome} onChange={e => set('nome', e.target.value)} placeholder="Nome completo" />
-          </div>
-          <div className="field">
-            <label>Telefone / WhatsApp</label>
-            <input value={form.telefone} onChange={e => set('telefone', e.target.value.replace(/[^0-9]/g, ''))} placeholder="64999999999" />
-          </div>
-          <div className="field">
-            <label>Empresa / Transportadora</label>
-            <input value={form.empresa} onChange={e => set('empresa', e.target.value)} placeholder="Ex: Via Log" />
-          </div>
-          <div className="field">
-            <label>Tipo</label>
-            <select value={form.tipo} onChange={e => set('tipo', e.target.value)}>
-              <option>Motorista</option>
-              <option>Transportadora</option>
-              <option>Autônomo</option>
-              <option>Outro</option>
-            </select>
-          </div>
-          <div className="field wide">
-            <label>Observação</label>
-            <input value={form.obs} onChange={e => set('obs', e.target.value)} placeholder="Ex: prefere carregar de manhã, tem caminhão baú..." />
-          </div>
-        </div>
-        <button className="btn-blue btn-full" onClick={handleSalvar}>Salvar contato</button>
-      </div>
-
-      {/* Lista pessoal */}
-      <div className="box">
-        <div className="box-title">
-          <h2>Meus contatos captados</h2>
-          <span>{captacoes.filter(c => c.captadoPor === usuarioAtual?.usuario).length} contato(s)</span>
-        </div>
-        <div className="filters" style={{ marginBottom: 12 }}>
-          <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Pesquisar nome, empresa, telefone..." />
-          {busca && <button className="btn-light btn-small" onClick={() => setBusca('')}>Limpar</button>}
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Nome</th><th>Telefone</th><th>Empresa</th><th>Tipo</th><th>Obs</th><th>Carregou?</th><th>Ações</th></tr>
-            </thead>
-            <tbody>
-              {lista.filter(c => !isAdmin && c.captadoPor === usuarioAtual?.usuario).length === 0
-                ? <tr><td colSpan={7} className="empty">Nenhum contato ainda.</td></tr>
-                : lista.filter(c => c.captadoPor === usuarioAtual?.usuario).map(c => (
-                  <tr key={c.id}>
-                    <td><strong>{c.nome}</strong><br /><small style={{ color: 'var(--muted)' }}>{c.data}</small></td>
-                    <td>
-                      <a href={`https://wa.me/55${c.telefone}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#4ade80', fontWeight: 700, textDecoration: 'none' }}>
-                        {c.telefone}
-                      </a>
-                    </td>
-                    <td>{c.empresa || '-'}</td>
-                    <td><span className="badge badge-logistica">{c.tipo}</span></td>
-                    <td style={{ maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.obs || '-'}</td>
-                    <td>
-                      <button
-                        onClick={() => marcarCarregou(c.id)}
-                        style={{
-                          background: c.carregou ? 'linear-gradient(135deg,#15803d,#16a34a)' : 'var(--bg)',
-                          color: c.carregou ? 'white' : 'var(--muted)',
-                          border: `1px solid ${c.carregou ? 'transparent' : 'var(--line)'}`,
-                          borderRadius: 8, padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                          boxShadow: c.carregou ? '0 4px 12px rgba(22,163,74,.3)' : 'none',
-                        }}
-                      >
-                        {c.carregou ? '✓ Carregou' : 'Marcar'}
-                      </button>
-                    </td>
-                    <td>
-                      <button className="btn-red btn-small" onClick={() => setConfirmExcluir(c.id)}>Excluir</button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  )
-
-  /* ── VIEW ADMIN ── */
-  const rank = ranking()
-  const totalGeral = captacoes.length
-  const totalCarregou = captacoes.filter(c => c.carregou).length
-
-  const viewAdmin = (
-    <>
-      {/* Hero stats */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: 16,
-      }}>
-        {[
-          { label: 'Total captados', value: totalGeral, cor: '#60a5fa', icon: '📋' },
-          { label: 'Carregaram', value: totalCarregou, cor: '#4ade80', icon: '✅' },
-          { label: 'Taxa conversão', value: totalGeral ? `${Math.round(totalCarregou / totalGeral * 100)}%` : '0%', cor: '#a78bfa', icon: '📈' },
-          { label: 'Captadores ativos', value: rank.length, cor: '#f59e0b', icon: '👥' },
-        ].map(s => (
-          <div key={s.label} className="box" style={{ margin: 0, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14 }}>
-            <div style={{ fontSize: 26 }}>{s.icon}</div>
-            <div>
-              <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px' }}>{s.label}</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: s.cor }}>{s.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Ranking */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-        {/* Ranking captações */}
-        <div className="box" style={{ margin: 0 }}>
-          <div className="box-title">
-            <h2>🏆 Ranking de captações</h2>
-            <span>Quem mais captou contatos</span>
-          </div>
-          {rank.length === 0
-            ? <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>Nenhuma captação ainda.</p>
-            : rank.map((r, i) => {
-              const m = medalha(i)
-              return (
-                <div key={r.nome} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 0', borderBottom: i < rank.length - 1 ? '1px solid var(--line)' : 'none',
-                }}>
-                  <div style={{ width: 36, textAlign: 'center', fontSize: i < 3 ? 22 : 13, fontWeight: 900, color: m.cor, flexShrink: 0 }}>{m.icon}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.nome}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)' }}>{r.carregou} de {r.total} carregaram</div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: m.cor }}>{r.total}</div>
-                    <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.4px' }}>captados</div>
-                  </div>
-                </div>
-              )
-            })}
-        </div>
-
-        {/* Ranking conversão */}
-        <div className="box" style={{ margin: 0 }}>
-          <div className="box-title">
-            <h2>📈 Ranking de conversão</h2>
-            <span>Cujos contatos mais carregaram</span>
-          </div>
-          {rank.length === 0
-            ? <p style={{ color: 'var(--muted)', fontSize: 13, textAlign: 'center', padding: 20 }}>Nenhuma conversão ainda.</p>
-            : [...rank].sort((a, b) => b.carregou - a.carregou).map((r, i) => {
-              const m = medalha(i)
-              const taxa = r.total ? Math.round(r.carregou / r.total * 100) : 0
-              return (
-                <div key={r.nome} style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 0', borderBottom: i < rank.length - 1 ? '1px solid var(--line)' : 'none',
-                }}>
-                  <div style={{ width: 36, textAlign: 'center', fontSize: i < 3 ? 22 : 13, fontWeight: 900, color: m.cor, flexShrink: 0 }}>{m.icon}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.nome}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <div style={{ flex: 1, height: 5, borderRadius: 3, background: 'var(--line)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${taxa}%`, background: taxa >= 60 ? '#4ade80' : taxa >= 30 ? '#f59e0b' : '#f87171', borderRadius: 3, transition: 'width .4s' }} />
-                      </div>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', minWidth: 28 }}>{taxa}%</span>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#4ade80' }}>{r.carregou}</div>
-                    <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.4px' }}>carregaram</div>
-                  </div>
-                </div>
-              )
-            })}
-        </div>
-      </div>
-
-      {/* Todos contatos */}
-      <div className="box">
-        <div className="box-title">
-          <h2>Todos os contatos captados</h2>
-          <span>{captacoes.length} total</span>
-        </div>
-        <div className="filters" style={{ marginBottom: 12 }}>
-          <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Pesquisar nome, empresa, telefone..." />
-          {busca && <button className="btn-light btn-small" onClick={() => setBusca('')}>Limpar</button>}
-        </div>
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Nome</th><th>Telefone</th><th>Empresa</th><th>Tipo</th><th>Captado por</th><th>Carregou?</th><th>Data</th></tr>
-            </thead>
-            <tbody>
-              {lista.length === 0
-                ? <tr><td colSpan={7} className="empty">Nenhum contato encontrado.</td></tr>
-                : lista.map(c => (
-                  <tr key={c.id}>
-                    <td><strong>{c.nome}</strong></td>
-                    <td>
-                      <a href={`https://wa.me/55${c.telefone}`} target="_blank" rel="noopener noreferrer"
-                        style={{ color: '#4ade80', fontWeight: 700, textDecoration: 'none' }}>
-                        {c.telefone}
-                      </a>
-                    </td>
-                    <td>{c.empresa || '-'}</td>
-                    <td><span className="badge badge-logistica">{c.tipo}</span></td>
-                    <td><strong>{c.captadoPor}</strong></td>
-                    <td>
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 4,
-                        color: c.carregou ? '#4ade80' : 'var(--muted)',
-                        fontWeight: 700, fontSize: 12,
-                      }}>
-                        {c.carregou ? '✓ Sim' : '— Não'}
-                      </span>
-                    </td>
-                    <td><small>{c.data}</small></td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </>
-  )
+  const countStatus = (s) => minhas.filter(c => getStatus(c) === s).length
+  const total = minhas.length
+  const totalCarregou = countStatus('carregou')
+  const taxa = total ? Math.round(totalCarregou / total * 100) : 0
 
   return (
     <>
+      <style>{`@keyframes slideUp { from{opacity:0;transform:translateY(40px)} to{opacity:1;transform:none} }`}</style>
+
       <section className="aba active" id="abaCaptacao">
-        {isAdmin ? viewAdmin : viewOperador}
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: 12, marginBottom: 16 }}>
+          <StatCard Icon={Phone}         color="#64748b" value={countStatus('contatado')} label="Contatados"   />
+          <StatCard Icon={ClipboardCheck} color="#d97706" value={countStatus('ordem')}     label="Com ordem"    />
+          <StatCard Icon={PackageCheck}  color="#16a34a" value={countStatus('carregou')}  label="Carregaram"   />
+          <StatCard Icon={TrendingUp}    color="#7c3aed" value={`${taxa}%`}               label="Taxa de carga" sub={`${totalCarregou} de ${total}`} />
+        </div>
+
+        {isAdmin && captacoes.length > 0 && <RankingAdmin captacoes={captacoes} />}
+
+        {/* Search + filters */}
+        <div style={{ background: 'var(--card)', border: '1px solid var(--line)', borderRadius: 18, padding: '16px 18px', marginBottom: 14, boxShadow: '0 1px 6px rgba(15,23,42,.04)' }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+              <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
+              <input
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                placeholder="Pesquisar motorista, placa, produto..."
+                style={{ paddingLeft: 36 }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['todos', 'contatado', 'ordem', 'carregou'].map(s => (
+                <button key={s} onClick={() => setFiltroStatus(s)} style={{
+                  background: filtroStatus === s ? (s === 'todos' ? 'var(--blue)' : STATUS[s]?.cor || 'var(--blue)') : 'var(--bg)',
+                  color: filtroStatus === s ? 'white' : 'var(--muted)',
+                  border: `1px solid ${filtroStatus === s ? 'transparent' : 'var(--line)'}`,
+                  borderRadius: 10, padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', boxShadow: 'none',
+                }}>
+                  {s === 'todos' ? 'Todos' : STATUS[s].label}
+                  {s !== 'todos' && (
+                    <span style={{ marginLeft: 6, background: 'rgba(255,255,255,.22)', borderRadius: 4, padding: '1px 5px', fontSize: 10 }}>
+                      {countStatus(s)}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Cards list */}
+        {lista.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--muted)', background: 'var(--card)', border: '1px dashed var(--line)', borderRadius: 18 }}>
+            <Truck size={36} style={{ opacity: .3, marginBottom: 12 }} />
+            <div style={{ fontWeight: 700, fontSize: 15 }}>Nenhum motorista encontrado</div>
+            <div style={{ fontSize: 13, marginTop: 4 }}>Clique no botão + para registrar um novo contato</div>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12 }}>
+            {lista.map(c => (
+              <CardCaptacao
+                key={c.id} c={{ ...c, status: getStatus(c) }}
+                onAvancar={handleAvancar}
+                onExcluir={excluirCaptacao}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* FAB */}
+        <button
+          onClick={() => setModal(true)}
+          style={{
+            position: 'fixed', right: 24, bottom: 24, zIndex: 999,
+            width: 56, height: 56, borderRadius: '50%',
+            background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)',
+            color: 'white', boxShadow: '0 8px 24px rgba(37,99,235,.4)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', border: 'none', padding: 0,
+          }}
+        >
+          <Plus size={24} />
+        </button>
       </section>
 
-      {confirmExcluir && (
-        <ConfirmDialog
-          message="Excluir este contato permanentemente?"
-          onConfirm={() => { excluirCaptacao(confirmExcluir); setConfirmExcluir(null) }}
-          onCancel={() => setConfirmExcluir(null)}
-        />
+      {modal && (
+        <Modal form={form} setForm={setForm} onSalvar={handleSalvar} onFechar={() => setModal(false)} />
       )}
     </>
   )
