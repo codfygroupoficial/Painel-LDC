@@ -3,9 +3,12 @@ import { baixarAdmin } from '../lib/supabase'
 import { dinheiro, moedaNumero } from '../utils/index'
 import { nomeFilial } from '../data/filiais'
 import { useApp } from '../context/AppContext'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 export default function Admin() {
-  const { criarUsuario, usuarios, excluirUsuario, filiais, criarFilial, excluirFilial } = useApp()
+  const { criarUsuario, usuarios, excluirUsuario, filiais, criarFilial, excluirFilial, toast } = useApp()
+  const [confirmExcluirUser, setConfirmExcluirUser] = useState(null)
+  const [confirmExcluirFilial, setConfirmExcluirFilial] = useState(null)
   const [rows, setRows] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [filialFiltro, setFilialFiltro] = useState('')
@@ -70,7 +73,7 @@ export default function Admin() {
 
   const handleCriarUsuario = async () => {
     if (!novoUsuario.usuario || !novoUsuario.senha || !novoUsuario.nome || !novoUsuario.filial) {
-      alert('Preencha todos os campos.'); return
+      toast('Preencha todos os campos obrigatórios.', 'err'); return
     }
     await criarUsuario(novoUsuario)
     setNovoUsuario({ usuario: '', senha: '', nome: '', cargo: 'Operador', filial: '' })
@@ -92,6 +95,7 @@ export default function Admin() {
   )
 
   return (
+    <>
     <section className="aba active">
 
       <div className="box" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)', color: '#fff', border: 'none' }}>
@@ -222,7 +226,7 @@ export default function Admin() {
                 <div><strong>{u.nome}</strong><small>{u.usuario} • {u.cargo} • {nomeFilial(u.filial)}</small></div>
               </div>
               {u.usuario !== 'admin' && (
-                <button className="btn-red btn-small" onClick={() => confirm(`Excluir ${u.usuario}?`) && excluirUsuario(u.usuario)}>Excluir</button>
+                <button className="btn-red btn-small" onClick={() => setConfirmExcluirUser(u.usuario)}>Excluir</button>
               )}
             </div>
           ))}
@@ -244,7 +248,7 @@ export default function Admin() {
                 </div>
               </div>
               {f.id !== 'rondonopolis-mt' && (
-                <button className="btn-red btn-small" onClick={() => confirm(`Excluir filial "${f.nome}"?`) && excluirFilial(f.id)}>Excluir</button>
+                <button className="btn-red btn-small" onClick={() => setConfirmExcluirFilial(f.id)}>Excluir</button>
               )}
             </div>
           ))}
@@ -262,5 +266,21 @@ export default function Admin() {
       </div>
 
     </section>
+
+    {confirmExcluirUser && (
+      <ConfirmDialog
+        message={`Excluir o usuário "${confirmExcluirUser}"? Esta ação não pode ser desfeita.`}
+        onConfirm={() => { excluirUsuario(confirmExcluirUser); setConfirmExcluirUser(null) }}
+        onCancel={() => setConfirmExcluirUser(null)}
+      />
+    )}
+    {confirmExcluirFilial && (
+      <ConfirmDialog
+        message={`Excluir a filial "${nomeFilial(confirmExcluirFilial)}"?`}
+        onConfirm={() => { excluirFilial(confirmExcluirFilial); setConfirmExcluirFilial(null) }}
+        onCancel={() => setConfirmExcluirFilial(null)}
+      />
+    )}
+    </>
   )
 }

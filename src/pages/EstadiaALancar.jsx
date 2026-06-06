@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import DropZone from '../components/DropZone'
+import ConfirmDialog from '../components/ConfirmDialog'
 
 function classePrio(p) {
   if (p === 'Urgente') return 'prio-urgente'
@@ -9,20 +10,22 @@ function classePrio(p) {
 }
 
 export default function EstadiaALancar({ formRef }) {
-  const { estadiasALancar, adicionarALancar, abrirParaLancar, excluirALancar } = useApp()
+  const { estadiasALancar, adicionarALancar, abrirParaLancar, excluirALancar, toast } = useApp()
   const [form, setForm] = useState({ placa: '', transportadora: '', prioridade: 'Normal', obs: '' })
   const [arquivos, setArquivos] = useState([])
+  const [confirmExcluir, setConfirmExcluir] = useState(null)
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   const handleSalvar = async () => {
-    if (!form.placa.trim()) { alert('Preencha a placa.'); return }
+    if (!form.placa.trim()) { toast('Preencha a placa.', 'err'); return }
     await adicionarALancar(form, arquivos)
     setForm({ placa: '', transportadora: '', prioridade: 'Normal', obs: '' })
     setArquivos([])
   }
 
   return (
+    <>
     <section className="aba active" id="abaALancar">
       <div className="box" ref={formRef}>
         <div className="box-title">
@@ -78,7 +81,7 @@ export default function EstadiaALancar({ formRef }) {
                     <td><span className={`prio ${classePrio(e.prioridade)}`}>{e.prioridade || 'Normal'}</span></td>
                     <td>
                       {e.anexos?.length
-                        ? e.anexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">Arquivo {i + 1}</a>)
+                        ? e.anexos.filter(a => a?.url).map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">Arquivo {i + 1}</a>)
                         : '-'}
                     </td>
                     <td>{e.obs || '-'}</td>
@@ -87,7 +90,7 @@ export default function EstadiaALancar({ formRef }) {
                     <td>
                       <div className="actions">
                         <button className="btn-green btn-small" onClick={() => abrirParaLancar(e.id)}>Lançar</button>
-                        <button className="btn-red btn-small" onClick={() => confirm('Excluir esta pendência?') && excluirALancar(e.id)}>Excluir</button>
+                        <button className="btn-red btn-small" onClick={() => setConfirmExcluir(e.id)}>Excluir</button>
                       </div>
                     </td>
                   </tr>
@@ -97,5 +100,14 @@ export default function EstadiaALancar({ formRef }) {
         </div>
       </div>
     </section>
+
+    {confirmExcluir && (
+      <ConfirmDialog
+        message="Excluir esta pendência?"
+        onConfirm={() => { excluirALancar(confirmExcluir); setConfirmExcluir(null) }}
+        onCancel={() => setConfirmExcluir(null)}
+      />
+    )}
+    </>
   )
 }

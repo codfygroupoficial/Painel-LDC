@@ -29,7 +29,7 @@ export default function Sidebar({ onFechar }) {
   return (
     <aside className="sidebar-pro" id="sidebarPro">
       <div className="brand-pro">
-        <img src="/logo.png" alt="Via Log" style={{ height: 38, width: 'auto', objectFit: 'contain' }} />
+        <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, color: 'white', flexShrink: 0 }}>VL</div>
         <div><h1>Via Log</h1><p>Sistema de estadias</p></div>
       </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 import { calcularEstadia, linkWhatsapp, dataISOTexto } from '../utils/index'
 import DropZone from '../components/DropZone'
+import ConfirmDialog from '../components/ConfirmDialog'
 import { nomeFilial } from '../data/filiais'
 
 const EMPTY = { chamado: '', motorista: '', telefoneMotorista: '', transportadora: '', placa: '', peso: '', prioridade: 'Normal', pagoPor: 'Logística', chegadaData: '', chegadaHora: '', saidaData: '', saidaHora: '' }
@@ -25,8 +26,9 @@ function classeStatus(s) {
 }
 
 export default function EstadiaLancada({ formRef }) {
-  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais } = useApp()
+  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais, toast } = useApp()
   const [form, setForm] = useState(EMPTY)
+  const [confirmExcluir, setConfirmExcluir] = useState(null)
   const [editandoId, setEditandoId] = useState(null)
   const [arquivos, setArquivos] = useState([])
   const [existingAnexos, setExistingAnexos] = useState([])
@@ -82,8 +84,8 @@ export default function EstadiaLancada({ formRef }) {
   }
 
   const handleSalvar = async () => {
-    if (!calc) { alert('Preencha peso, chegada e saída corretamente.'); return }
-    if (!form.motorista.trim() || !form.placa.trim()) { alert('Preencha motorista e placa.'); return }
+    if (!calc) { toast('Preencha peso, chegada e saída corretamente.', 'err'); return }
+    if (!form.motorista.trim() || !form.placa.trim()) { toast('Preencha motorista e placa.', 'err'); return }
     const novosAnexos = []
     for (const file of arquivos.slice(0, 2)) {
       const up = await uploadAnexoItem(file)
@@ -112,6 +114,7 @@ export default function EstadiaLancada({ formRef }) {
   })
 
   return (
+    <>
     <section className="aba active" id="abaLancadas">
       <div className="box" ref={formRef}>
         <div className="box-title">
@@ -281,7 +284,7 @@ export default function EstadiaLancada({ formRef }) {
                         {e.status !== 'Aberto' && <button className="btn-orange btn-small" onClick={() => reabrir(e.id)}>Reabrir</button>}
                         <button className="btn-light btn-small" onClick={() => handleEditar(e)}>Editar</button>
                         {e.telefoneMotorista && <a className="btn btn-green btn-small" href={linkWhatsapp(e)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
-                        <button className="btn-red btn-small" onClick={() => confirm('Excluir esta estadia?') && excluirLancada(e.id)}>Excluir</button>
+                        <button className="btn-red btn-small" onClick={() => setConfirmExcluir(e.id)}>Excluir</button>
                       </div>
                     </td>
                   </tr>
@@ -291,5 +294,14 @@ export default function EstadiaLancada({ formRef }) {
         </div>
       </div>
     </section>
+
+    {confirmExcluir && (
+      <ConfirmDialog
+        message="Excluir esta estadia permanentemente?"
+        onConfirm={() => { excluirLancada(confirmExcluir); setConfirmExcluir(null) }}
+        onCancel={() => setConfirmExcluir(null)}
+      />
+    )}
+    </>
   )
 }

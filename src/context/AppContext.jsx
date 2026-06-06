@@ -159,7 +159,7 @@ export function AppProvider({ children }) {
       setCloud('online', 'Salvo automaticamente.')
     } catch {
       supabaseOnline.current = false
-      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo) }]
+      const fila = [...state.filaNuvem, { acao: 'upsert', payload: sb.payload(item, tipo, filial) }]
       dispatch({ type: 'SET_FILA', payload: fila })
       setCloud('offline', 'Falhou. Guardado na fila offline.')
     }

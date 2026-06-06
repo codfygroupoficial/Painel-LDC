@@ -20,6 +20,11 @@ function Painel() {
   const formLancadaRef = useRef()
   const formALancarRef = useRef()
 
+  useEffect(() => {
+    document.body.classList.toggle('sidebar-open', sidebarOpen)
+    return () => document.body.classList.remove('sidebar-open')
+  }, [sidebarOpen])
+
   const focarLancada = () => {
     mudarAba('lancadas')
     setTimeout(() => formLancadaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
