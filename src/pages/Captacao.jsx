@@ -281,7 +281,7 @@ function RankingAdmin({ captacoes }) {
 
 // ────── COMPONENTE PRINCIPAL ───────────────────────────────────────────────
 export default function Captacao() {
-  const { captacoes = [], adicionarCaptacao, atualizarStatusCaptacao, excluirCaptacao, usuarioAtual, toast } = useApp()
+  const { captacoes = [], adicionarCaptacao, atualizarCaptacao, atualizarStatusCaptacao, excluirCaptacao, usuarioAtual, toast } = useApp()
   const isAdmin = usuarioAtual?.cargo === 'Admin'
 
   const [busca, setBusca] = useState('')
@@ -329,8 +329,7 @@ export default function Captacao() {
 
   const salvarModal = async (form) => {
     if (editando) {
-      await atualizarStatusCaptacao(editando.id, form.status, form.obs)
-      // atualizar campos extras via status update (simplificado)
+      await atualizarCaptacao(editando.id, form)
     } else {
       await adicionarCaptacao({
         motorista: form.motorista,

@@ -432,11 +432,32 @@ export function AppProvider({ children }) {
       dataCaptacao: new Date().toLocaleString('pt-BR'),
       status:       dados.status || 'contatado',
       operacao:     dados.produto || dados.operacao || 'Farelo',
+      produto:      dados.produto || dados.operacao || 'Farelo',
     }
     dispatch({ type: 'SET_CAPTACOES', payload: [nova, ...state.captacoes] })
     toast('Captação registrada.', 'ok')
     await salvarNuvem(nova, 'captacao')
   }, [state.captacoes, state.usuarioAtual, salvarNuvem, toast])
+
+  const atualizarCaptacao = useCallback(async (id, form) => {
+    const existente = state.captacoes.find(c => String(c.id) === String(id))
+    if (!existente) return
+    const atualizado = {
+      ...existente,
+      motorista: form.motorista,
+      telefone:  form.telefone,
+      placa:     form.placa,
+      produto:   form.operacao,
+      operacao:  form.operacao,
+      status:    form.status,
+      obs:       form.obs,
+      origem:    form.origem,
+      destino:   form.destino,
+    }
+    dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.map(c => String(c.id) === String(id) ? atualizado : c) })
+    toast('Captação atualizada.', 'ok')
+    await salvarNuvem(atualizado, 'captacao')
+  }, [state.captacoes, salvarNuvem, toast])
 
   const atualizarStatusCaptacao = useCallback(async (id, novoStatus, obs) => {
     const atualizado = state.captacoes.map(c =>
@@ -446,7 +467,7 @@ export function AppProvider({ children }) {
     toast(`Status: ${novoStatus}`, 'ok')
     const item = atualizado.find(c => String(c.id) === String(id))
     if (item) await salvarNuvem(item, 'captacao')
-  }, [state.captacoes, state.usuarioAtual, salvarNuvem, toast])
+  }, [state.captacoes, salvarNuvem, toast])
 
   const excluirCaptacao = useCallback(async (id) => {
     dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.filter(c => String(c.id) !== String(id)) })
@@ -475,7 +496,7 @@ export function AppProvider({ children }) {
     conectarSupabase, sincronizarFila,
     editarLancada, limparItemParaLancar,
     uploadAnexoItem, dataISOTexto,
-    adicionarCaptacao, atualizarStatusCaptacao, excluirCaptacao,
+    adicionarCaptacao, atualizarCaptacao, atualizarStatusCaptacao, excluirCaptacao,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

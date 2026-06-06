@@ -20,11 +20,17 @@ export const getClient = () => {
 }
 
 // ---------------------------------------------------------------
-// Status mapping  UI (9 estados)  →  DB (3 estados)
+// Status mapping  UI (contatado/ordem/carregou)  ↔  DB (mesmos valores)
 // ---------------------------------------------------------------
 const mapStatusDB = (status) => {
-  if (status === 'Carregou') return 'carregou'
-  if (status === 'Programado para carregar' || status === 'Chegou na origem') return 'ordem'
+  if (status === 'carregou') return 'carregou'
+  if (status === 'ordem')    return 'ordem'
+  return 'contatado'
+}
+
+const mapStatusUI = (dbStatus) => {
+  if (dbStatus === 'carregou') return 'carregou'
+  if (dbStatus === 'ordem')    return 'ordem'
   return 'contatado'
 }
 
@@ -37,7 +43,7 @@ export const payload = (item, tipo, filial = 'principal') => {
     local_id: String(item.id),
     captador_usuario: item.captadoPor || null,
     filial_id: item.filial || filial,
-    operacao: item.produto || 'Farelo',
+    operacao: item.produto || item.operacao || 'Farelo',
     status: mapStatusDB(item.status),
     observacao: item.obs || '',
     quantidade_cargas: Math.max(1, Number(item.qtdCargas) || 1),
@@ -166,28 +172,27 @@ export const baixarCaptacoes = async (filial = null) => {
   const { data, error } = await q
   if (error) throw error
   return (data || []).map(c => {
-    const mot = c.vl_motoristas
+    const mot  = c.vl_motoristas
     const base = c.dados || {}
     return {
       ...base,
-      id: c.local_id || c.id,
-      _supabase_id: c.id,
-      captadoPor:      c.captador_usuario || base.captadoPor || '',
-      filial:          c.filial_id        || base.filial     || '',
-      produto:         c.operacao         || base.produto    || 'Farelo',
-      qtdCargas:       c.quantidade_cargas ?? base.qtdCargas ?? 1,
-      status:          base.status        || mapStatusUI(c.status),
-      motorista:       mot?.nome          || base.motorista  || '',
-      telefone:        mot?.telefone      || base.telefone   || '',
-      cidadeMotorista: mot?.cidade        || base.cidadeMotorista || '',
+      id:              c.local_id          || c.id,
+      _supabase_id:    c.id,
+      captadoPor:      c.captador_usuario  || base.captadoPor      || '',
+      filial:          c.filial_id         || base.filial          || '',
+      produto:         c.operacao          || base.produto         || 'Farelo',
+      operacao:        c.operacao          || base.operacao        || 'Farelo',
+      qtdCargas:       c.quantidade_cargas ?? base.qtdCargas       ?? 1,
+      status:          base.status         || mapStatusUI(c.status),
+      obs:             base.obs            || c.observacao         || '',
+      motorista:       mot?.nome           || base.motorista       || '',
+      telefone:        mot?.telefone       || base.telefone        || '',
+      cidadeMotorista: mot?.cidade         || base.cidadeMotorista || '',
+      placa:           base.placa          || '',
+      origem:          base.origem         || '',
+      destino:         base.destino        || '',
     }
   })
-}
-
-const mapStatusUI = (dbStatus) => {
-  if (dbStatus === 'carregou') return 'Carregou'
-  if (dbStatus === 'ordem')    return 'Programado para carregar'
-  return 'Contato captado'
 }
 
 // ---------------------------------------------------------------
