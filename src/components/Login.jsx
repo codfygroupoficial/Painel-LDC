@@ -6,7 +6,6 @@ export default function Login() {
   const [form, setForm] = useState({ usuario: '', senha: '' })
   const [carregando, setCarregando] = useState(false)
   const canvasRef = useRef(null)
-  const mouseRef = useRef({ x: 0, y: 0 })
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
@@ -17,225 +16,329 @@ export default function Login() {
     setCarregando(false)
   }
 
-  /* Nebulosa interativa */
+  /* Estrada animada no canvas */
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
+    let animId
+    let offset = 0
 
     const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
+      canvas.width = canvas.offsetWidth
+      canvas.height = canvas.offsetHeight
     }
     resize()
     window.addEventListener('resize', resize)
 
-    const onMouse = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY } }
-    window.addEventListener('mousemove', onMouse)
+    const draw = () => {
+      const W = canvas.width
+      const H = canvas.height
+      ctx.clearRect(0, 0, W, H)
 
-    class Particle {
-      constructor() { this.reset() }
-      reset() {
-        this.x = Math.random() * canvas.width
-        this.y = Math.random() * canvas.height
-        this.size = Math.random() * 100 + 50
-        this.color = Math.random() > 0.5 ? 'rgba(59,130,246,0.05)' : 'rgba(124,58,237,0.05)'
-        this.speedX = (Math.random() - 0.5) * 0.5
-        this.speedY = (Math.random() - 0.5) * 0.5
-      }
-      update() {
-        this.x += this.speedX
-        this.y += this.speedY
-        const dx = mouseRef.current.x - this.x
-        const dy = mouseRef.current.y - this.y
-        const dist = Math.sqrt(dx * dx + dy * dy)
-        if (dist < 300) { this.x += dx * 0.01; this.y += dy * 0.01 }
-        if (this.x < -100 || this.x > canvas.width + 100 || this.y < -100 || this.y > canvas.height + 100) this.reset()
-      }
-      draw() {
+      /* céu / fundo */
+      const sky = ctx.createLinearGradient(0, 0, 0, H)
+      sky.addColorStop(0, '#020917')
+      sky.addColorStop(0.6, '#0a1628')
+      sky.addColorStop(1, '#111827')
+      ctx.fillStyle = sky
+      ctx.fillRect(0, 0, W, H)
+
+      /* estrelas */
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'
+      for (let i = 0; i < 80; i++) {
+        const sx = ((i * 137.5 + offset * 0.05) % W)
+        const sy = (i * 53) % (H * 0.55)
+        const sr = (i % 3 === 0) ? 1.2 : 0.6
         ctx.beginPath()
-        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size)
-        g.addColorStop(0, this.color)
-        g.addColorStop(1, 'transparent')
-        ctx.fillStyle = g
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2)
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2)
         ctx.fill()
       }
-    }
 
-    const particles = Array.from({ length: 30 }, () => new Particle())
-    let animId
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      particles.forEach(p => { p.update(); p.draw() })
-      animId = requestAnimationFrame(animate)
+      /* estrada */
+      const roadY = H * 0.62
+      const roadH = H - roadY
+
+      /* asfalto */
+      const road = ctx.createLinearGradient(0, roadY, 0, H)
+      road.addColorStop(0, '#1a1a2e')
+      road.addColorStop(1, '#0d0d1a')
+      ctx.fillStyle = road
+      ctx.fillRect(0, roadY, W, roadH)
+
+      /* linha divisória central animada */
+      ctx.strokeStyle = '#f59e0b'
+      ctx.lineWidth = 3
+      ctx.setLineDash([40, 30])
+      ctx.lineDashOffset = -offset
+      ctx.beginPath()
+      ctx.moveTo(0, roadY + roadH * 0.3)
+      ctx.lineTo(W, roadY + roadH * 0.3)
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      /* linhas laterais brancas */
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(0, roadY + 2)
+      ctx.lineTo(W, roadY + 2)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(0, H - 2)
+      ctx.lineTo(W, H - 2)
+      ctx.stroke()
+
+      /* reflexo da estrada */
+      const refl = ctx.createLinearGradient(0, roadY, 0, roadY + 60)
+      refl.addColorStop(0, 'rgba(37,99,235,0.08)')
+      refl.addColorStop(1, 'transparent')
+      ctx.fillStyle = refl
+      ctx.fillRect(0, roadY, W, 60)
+
+      /* montanhas ao fundo */
+      ctx.fillStyle = '#0f1f3d'
+      ctx.beginPath()
+      ctx.moveTo(0, roadY)
+      ctx.lineTo(W * 0.1, roadY - 80)
+      ctx.lineTo(W * 0.22, roadY - 40)
+      ctx.lineTo(W * 0.35, roadY - 120)
+      ctx.lineTo(W * 0.5, roadY - 60)
+      ctx.lineTo(W * 0.65, roadY - 140)
+      ctx.lineTo(W * 0.78, roadY - 50)
+      ctx.lineTo(W * 0.9, roadY - 90)
+      ctx.lineTo(W, roadY - 30)
+      ctx.lineTo(W, roadY)
+      ctx.closePath()
+      ctx.fill()
+
+      /* luzes de faróis na pista (carro vindo) */
+      const lightX = ((offset * 1.5) % (W + 200)) - 100
+      const lg = ctx.createRadialGradient(lightX, roadY + roadH * 0.25, 0, lightX, roadY + roadH * 0.25, 120)
+      lg.addColorStop(0, 'rgba(255,220,100,0.18)')
+      lg.addColorStop(1, 'transparent')
+      ctx.fillStyle = lg
+      ctx.fillRect(0, roadY, W, roadH)
+
+      offset += 1.5
+      animId = requestAnimationFrame(draw)
     }
-    animate()
+    draw()
 
     return () => {
       cancelAnimationFrame(animId)
       window.removeEventListener('resize', resize)
-      window.removeEventListener('mousemove', onMouse)
     }
   }, [])
-
-  /* Estrelas */
-  const stars = Array.from({ length: 150 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 2.5,
-    left: Math.random() * 100,
-    top: Math.random() * 100,
-    duration: Math.random() * 3 + 2,
-    delay: Math.random() * 5,
-  }))
 
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: '#020408',
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      color: 'white',
+      background: '#020917',
+      fontFamily: "'Inter', sans-serif",
       overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
-      {/* Fontes */}
-      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
 
       <style>{`
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.2; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.3); }
+        @keyframes truckDrive {
+          from { transform: translateX(-160px); }
+          to   { transform: translateX(calc(100vw + 20px)); }
         }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateX(40px); }
-          to { opacity: 1; transform: translateX(0); }
+        @keyframes loginCardIn {
+          from { opacity: 0; transform: translateY(30px) scale(0.96); }
+          to   { opacity: 1; transform: none; }
         }
-        @keyframes logoPulse {
-          0%, 100% { filter: drop-shadow(0 0 8px rgba(59,130,246,0.4)); }
-          50% { filter: drop-shadow(0 0 20px rgba(59,130,246,0.7)); }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: none; }
         }
-        .login-input-wrap { position:relative; border-radius:14px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); transition:all 0.3s ease; }
-        .login-input-wrap:focus-within { border-color:#3b82f6; box-shadow:0 0 25px rgba(59,130,246,0.2); background:rgba(255,255,255,0.05); transform:translateY(-2px); }
-        .login-input-wrap input { background:transparent; border:none; outline:none; width:100%; padding:14px 14px 14px 48px; color:white; font-family:inherit; font-size:15px; }
-        .login-input-wrap input::placeholder { color:rgba(255,255,255,0.3); }
-        .btn-launch { background:linear-gradient(135deg,#2563eb 0%,#7c3aed 100%); border:none; cursor:pointer; transition:all 0.3s ease; color:white; font-weight:700; font-size:16px; letter-spacing:1px; border-radius:16px; padding:18px; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
-        .btn-launch:hover:not(:disabled) { transform:scale(1.02); box-shadow:0 0 40px rgba(124,58,237,0.4); }
-        .btn-launch:disabled { opacity:0.7; cursor:not-allowed; }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(37,99,235,0.3); }
+          50% { box-shadow: 0 0 40px rgba(37,99,235,0.6); }
+        }
+        .login-input {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 12px;
+          padding: 14px 16px 14px 46px;
+          color: white;
+          font-size: 15px;
+          font-family: inherit;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .login-input:focus {
+          border-color: #3b82f6;
+          background: rgba(59,130,246,0.08);
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+        .login-input::placeholder { color: rgba(255,255,255,0.25); }
+        .login-btn {
+          width: 100%;
+          padding: 15px;
+          background: linear-gradient(135deg, #1d4ed8, #7c3aed);
+          border: none;
+          border-radius: 12px;
+          color: white;
+          font-size: 15px;
+          font-weight: 700;
+          font-family: inherit;
+          cursor: pointer;
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          animation: glow 3s ease-in-out infinite;
+        }
+        .login-btn:hover:not(:disabled) {
+          transform: translateY(-2px);
+          filter: brightness(1.1);
+        }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; animation: none; }
       `}</style>
 
-      {/* Canvas nebulosa */}
-      <canvas ref={canvasRef} style={{ position:'fixed', inset:0, opacity:0.6, zIndex:0, pointerEvents:'none' }} />
+      {/* Canvas — cena da estrada */}
+      <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
 
-      {/* Estrelas */}
-      <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none' }}>
-        {stars.map(s => (
-          <div key={s.id} style={{
-            position: 'absolute',
-            width: s.size, height: s.size,
-            background: 'white', borderRadius: '50%',
-            left: s.left + '%', top: s.top + '%',
-            animation: `twinkle ${s.duration}s ${s.delay}s infinite ease-in-out`,
-          }} />
-        ))}
+      {/* Caminhão SVG animado */}
+      <div style={{
+        position: 'absolute',
+        bottom: '22%',
+        left: 0,
+        zIndex: 2,
+        animation: 'truckDrive 8s linear infinite',
+      }}>
+        <svg width="140" height="60" viewBox="0 0 140 60" fill="none">
+          {/* carroceria */}
+          <rect x="0" y="10" width="90" height="36" rx="4" fill="#1e3a5f" stroke="#2563eb" strokeWidth="1.5"/>
+          {/* listras */}
+          <rect x="10" y="10" width="3" height="36" fill="rgba(37,99,235,0.4)"/>
+          <rect x="20" y="10" width="3" height="36" fill="rgba(37,99,235,0.3)"/>
+          <rect x="30" y="10" width="3" height="36" fill="rgba(37,99,235,0.2)"/>
+          {/* cabine */}
+          <rect x="90" y="18" width="42" height="28" rx="5" fill="#0f2744" stroke="#3b82f6" strokeWidth="1.5"/>
+          {/* vidro */}
+          <rect x="105" y="22" width="22" height="14" rx="3" fill="#60a5fa" opacity="0.7"/>
+          {/* para-choque */}
+          <rect x="128" y="38" width="8" height="5" rx="2" fill="#374151"/>
+          {/* farol */}
+          <circle cx="133" cy="34" r="3" fill="#fde68a" opacity="0.9"/>
+          <ellipse cx="136" cy="34" rx="6" ry="3" fill="rgba(253,230,138,0.25)"/>
+          {/* escapamento */}
+          <rect x="88" y="4" width="5" height="16" rx="2" fill="#374151"/>
+          <ellipse cx="90.5" cy="4" rx="4" ry="2" fill="rgba(156,163,175,0.4)"/>
+          {/* rodas */}
+          <circle cx="25" cy="48" r="10" fill="#111827" stroke="#4b5563" strokeWidth="2"/>
+          <circle cx="25" cy="48" r="5" fill="#374151"/>
+          <circle cx="75" cy="48" r="10" fill="#111827" stroke="#4b5563" strokeWidth="2"/>
+          <circle cx="75" cy="48" r="5" fill="#374151"/>
+          <circle cx="112" cy="48" r="10" fill="#111827" stroke="#4b5563" strokeWidth="2"/>
+          <circle cx="112" cy="48" r="5" fill="#374151"/>
+          {/* logo na carroceria */}
+          <text x="45" y="32" textAnchor="middle" fill="rgba(255,255,255,0.6)" fontSize="9" fontWeight="700">VIA LOG</text>
+        </svg>
       </div>
 
-      {/* Layout */}
-      <div style={{ position:'relative', zIndex:1, display:'flex', minHeight:'100vh', width:'100%' }}>
+      {/* Overlay escuro para legibilidade */}
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,9,23,0.55)', zIndex: 1 }} />
 
-        {/* Lado esquerdo — visível apenas em telas grandes */}
-        <div style={{ flex:1, display:'flex', flexDirection:'column', justifyContent:'center', padding:'0 80px' }} className="login-hero-side">
-          <style>{`.login-hero-side { display:none; } @media(min-width:1024px){ .login-hero-side { display:flex !important; } }`}</style>
-          <img src="/logo.png" alt="Via Log" style={{ height:72, width:'auto', objectFit:'contain', marginBottom:40, animation:'logoPulse 3s infinite ease-in-out' }} />
+      {/* Conteúdo central */}
+      <div style={{
+        position: 'relative', zIndex: 3,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        minHeight: '100vh', padding: '20px',
+      }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 36, animation: 'fadeUp 0.6s ease' }}>
+          <img src="/logo.png" alt="Via Log" style={{ height: 56, marginBottom: 16, filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.5))' }} />
           <h1 style={{
-            fontFamily: "'Orbitron', sans-serif",
-            fontSize: 64, fontWeight: 700, lineHeight: 1.05,
-            background: 'linear-gradient(180deg, #fff 0%, #3b82f6 100%)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 15px rgba(59,130,246,0.3))',
-            marginBottom: 20,
-          }}>SISTEMA DE<br />ESTADIAS</h1>
-          <p style={{ fontSize:18, color:'#94a3b8', maxWidth:440, lineHeight:1.7, fontWeight:300, marginBottom:40 }}>
-            A próxima geração em logística e controle.{' '}
-            <span style={{ color:'#60a5fa', fontWeight:600 }}>Sincronização em tempo real.</span>
+            fontSize: 36, fontWeight: 900, color: 'white',
+            letterSpacing: '-1px', margin: 0,
+            textShadow: '0 0 40px rgba(59,130,246,0.4)',
+          }}>Via Log</h1>
+          <p style={{ color: 'rgba(148,163,184,0.9)', marginTop: 6, fontSize: 14 }}>
+            Sistema de controle de estadias
           </p>
-          <div style={{ display:'flex', gap:32, alignItems:'center' }}>
-            <div>
-              <div style={{ fontSize:28, fontWeight:700 }}>99.9%</div>
-              <div style={{ fontSize:11, color:'#475569', textTransform:'uppercase', letterSpacing:3 }}>Uptime</div>
+        </div>
+
+        {/* Card de login */}
+        <div style={{
+          width: '100%', maxWidth: 420,
+          background: 'rgba(10,16,30,0.85)',
+          backdropFilter: 'blur(24px)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 24,
+          padding: '32px 28px',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+          animation: 'loginCardIn 0.7s cubic-bezier(0.16,1,0.3,1)',
+        }}>
+
+          <h2 style={{ color: 'white', fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Entrar no painel</h2>
+          <p style={{ color: 'rgba(148,163,184,0.7)', fontSize: 13, marginBottom: 24 }}>Acesso autorizado somente a usuários cadastrados</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Usuário */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4 }}>👤</span>
+              <input
+                className="login-input"
+                type="text"
+                placeholder="Usuário"
+                value={form.usuario}
+                onChange={e => set('usuario', e.target.value)}
+                autoComplete="username"
+                onKeyDown={e => e.key === 'Enter' && document.getElementById('ldc-senha')?.focus()}
+              />
             </div>
-            <div style={{ width:1, height:48, background:'#1e293b' }} />
-            <div>
-              <div style={{ fontSize:28, fontWeight:700 }}>256-bit</div>
-              <div style={{ fontSize:11, color:'#475569', textTransform:'uppercase', letterSpacing:3 }}>Criptografia</div>
+
+            {/* Senha */}
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.4 }}>🔒</span>
+              <input
+                id="ldc-senha"
+                className="login-input"
+                type="password"
+                placeholder="Senha"
+                value={form.senha}
+                onChange={e => set('senha', e.target.value)}
+                autoComplete="current-password"
+                onKeyDown={e => e.key === 'Enter' && handleLogin()}
+              />
             </div>
+
+            <button className="login-btn" onClick={handleLogin} disabled={carregando}>
+              {carregando ? (
+                <><span style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />Verificando...</>
+              ) : (
+                <><svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Acessar o painel</>
+              )}
+            </button>
+          </div>
+
+          {/* Stats rápidos */}
+          <div style={{ display: 'flex', gap: 12, marginTop: 24, paddingTop: 20, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            {[
+              { label: 'Uptime', value: '99.9%' },
+              { label: 'Segurança', value: '256-bit' },
+              { label: 'Sync', value: 'Real-time' },
+            ].map(s => (
+              <div key={s.label} style={{ flex: 1, textAlign: 'center' }}>
+                <div style={{ color: 'white', fontWeight: 800, fontSize: 14 }}>{s.value}</div>
+                <div style={{ color: 'rgba(148,163,184,0.5)', fontSize: 11, marginTop: 2 }}>{s.label}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Painel de login */}
-        <div style={{ width:'100%', maxWidth:550, display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }} className="login-panel-wrap">
-          <style>{`@media(min-width:1024px){ .login-panel-wrap { padding:48px !important; } }`}</style>
-          <div style={{
-            width: '100%',
-            background: 'rgba(255,255,255,0.02)',
-            backdropFilter: 'blur(40px)',
-            WebkitBackdropFilter: 'blur(40px)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            boxShadow: '0 0 80px rgba(0,0,0,0.5)',
-            borderRadius: 36,
-            padding: '48px 40px',
-            animation: 'slideIn 0.8s cubic-bezier(0.16,1,0.3,1)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}>
-            {/* Decoração interna */}
-            <div style={{ position:'absolute', top:-60, right:-60, width:150, height:150, background:'rgba(59,130,246,0.08)', borderRadius:'50%', filter:'blur(30px)', pointerEvents:'none' }} />
-
-            <div style={{ marginBottom:36 }}>
-              <h2 style={{ fontSize:36, fontWeight:700, margin:'0 0 6px' }}>Acesso</h2>
-              <p style={{ color:'#64748b', margin:0, fontSize:15 }}>Identifique-se para entrar no painel</p>
-            </div>
-
-            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              <div>
-                <label style={{ fontSize:11, fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:3, display:'block', marginBottom:8 }}>Usuário</label>
-                <div className="login-input-wrap">
-                  <span style={{ position:'absolute', top:'50%', left:16, transform:'translateY(-50%)', color:'rgba(59,130,246,0.5)', fontSize:16 }}>👤</span>
-                  <input
-                    type="text"
-                    placeholder="Nome de usuário"
-                    value={form.usuario}
-                    onChange={e => set('usuario', e.target.value)}
-                    autoComplete="username"
-                    onKeyDown={e => e.key === 'Enter' && document.getElementById('ldc-senha')?.focus()}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize:11, fontWeight:700, color:'#475569', textTransform:'uppercase', letterSpacing:3, display:'block', marginBottom:8 }}>Senha</label>
-                <div className="login-input-wrap">
-                  <span style={{ position:'absolute', top:'50%', left:16, transform:'translateY(-50%)', color:'rgba(59,130,246,0.5)', fontSize:16 }}>🔒</span>
-                  <input
-                    id="ldc-senha"
-                    type="password"
-                    placeholder="••••••••••••"
-                    value={form.senha}
-                    onChange={e => set('senha', e.target.value)}
-                    autoComplete="current-password"
-                    onKeyDown={e => e.key === 'Enter' && handleLogin()}
-                  />
-                </div>
-              </div>
-
-              <button className="btn-launch" onClick={handleLogin} disabled={carregando} style={{ marginTop:8 }}>
-                {carregando ? '⏳ Verificando...' : (<><span>ENTRAR NO PAINEL</span><span>⚡</span></>)}
-              </button>
-            </div>
-
-            <p style={{ textAlign:'center', marginTop:32, fontSize:13, color:'#334155' }}>
-              Acesso autorizado apenas para usuários cadastrados.
-            </p>
-          </div>
-        </div>
+        <p style={{ color: 'rgba(100,116,139,0.6)', fontSize: 12, marginTop: 24, zIndex: 3 }}>
+          © Via Log {new Date().getFullYear()} · Todos os direitos reservados
+        </p>
       </div>
     </div>
   )

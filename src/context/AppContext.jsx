@@ -10,7 +10,6 @@ const hashSenha = async (senha) => {
 }
 const isHash = (s) => /^[a-f0-9]{64}$/.test(s)
 
-/* ─── Estado inicial ────────────────────────────────────── */
 const load = (key, fallback) => {
   try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
 }
@@ -24,7 +23,7 @@ const initialState = {
   historico: load('historicoEstadias', []),
   abaAtiva: 'inicio',
   itemParaLancar: null,
-  tema: load('temaPainelViaLog', 'light'),
+  tema: load('temaPainelViaLog', 'dark'),
   somAtivo: load('somPainelViaLog', 'off') === 'on',
   cloudStatus: 'offline',
   cloudText: 'Faça login para conectar.',
@@ -35,7 +34,6 @@ const initialState = {
   toasts: [],
 }
 
-/* ─── Reducer ───────────────────────────────────────────── */
 function reducer(state, action) {
   switch (action.type) {
     case 'SET_USUARIO': return { ...state, usuarioAtual: action.payload }
@@ -59,7 +57,6 @@ function reducer(state, action) {
   }
 }
 
-/* ─── Context ───────────────────────────────────────────── */
 const AppCtx = createContext(null)
 export const useApp = () => useContext(AppCtx)
 
@@ -72,7 +69,6 @@ export function AppProvider({ children }) {
   const conectarRef = useRef(null)
   const usuarioRef = useRef(initialState.usuarioAtual)
 
-  /* Startup: carrega usuários e reconecta se já havia sessão */
   useEffect(() => {
     if (!navigator.onLine) return
     const init = async () => {
@@ -89,7 +85,6 @@ export function AppProvider({ children }) {
     init()
   }, [])
 
-  /* Persistência local */
   useEffect(() => {
     localStorage.setItem('usuariosPainelViaLog', JSON.stringify(state.usuarios))
     localStorage.setItem('filiaisViaLog', JSON.stringify(state.filiais))
@@ -111,20 +106,15 @@ export function AppProvider({ children }) {
     localStorage.setItem('filaSupabaseViaLog', JSON.stringify(state.filaNuvem))
   }, [state.filaNuvem])
 
-  /* Manter ref de usuário sempre atualizado */
   useEffect(() => { usuarioRef.current = state.usuarioAtual }, [state.usuarioAtual])
 
   const iniciarPresenca = useCallback((usuario) => {
-    if (canalPresenca.current) {
-      canalPresenca.current.unsubscribe()
-      canalPresenca.current = null
-    }
+    if (canalPresenca.current) { canalPresenca.current.unsubscribe(); canalPresenca.current = null }
     canalPresenca.current = sb.iniciarPresenca(usuario, (ativos) => {
       dispatch({ type: 'SET_ONLINE', payload: ativos })
     })
   }, [])
 
-  /* Reconectar automático — intervalo estável via refs */
   useEffect(() => {
     const id = setInterval(() => {
       if (usuarioRef.current && !supabaseOnline.current && navigator.onLine) conectarRef.current?.()
@@ -132,7 +122,6 @@ export function AppProvider({ children }) {
     return () => clearInterval(id)
   }, [])
 
-  /* ─── Helpers internos ────────────────────────────────── */
   const toast = useCallback((texto, tipo = '') => {
     const id = gerarId()
     dispatch({ type: 'ADD_TOAST', payload: { id, texto, tipo } })
@@ -154,7 +143,6 @@ export function AppProvider({ children }) {
     dispatch({ type: 'SET_CLOUD', status, text })
   }, [])
 
-  /* ─── Supabase ────────────────────────────────────────── */
   const salvarNuvem = useCallback(async (item, tipo) => {
     const filial = state.usuarioAtual?.filial || 'principal'
     if (!supabaseOnline.current || !navigator.onLine) {
@@ -183,9 +171,7 @@ export function AppProvider({ children }) {
       dispatch({ type: 'SET_FILA', payload: fila })
       return
     }
-    try {
-      await sb.deletar(id)
-    } catch {
+    try { await sb.deletar(id) } catch {
       const fila = [...state.filaNuvem, { acao: 'delete', local_id: String(id) }]
       dispatch({ type: 'SET_FILA', payload: fila })
     }
@@ -224,9 +210,7 @@ export function AppProvider({ children }) {
       }
       recebendoNuvem.current = false
       if (aviso) toast('Dados baixados da nuvem.', 'ok')
-    } catch {
-      recebendoNuvem.current = false
-    }
+    } catch { recebendoNuvem.current = false }
   }, [toast])
 
   const conectarSupabase = useCallback(async () => {
@@ -253,7 +237,6 @@ export function AppProvider({ children }) {
     }
   }, [sincronizarFila, baixarNuvem, setCloud, feed, toast])
 
-  /* Manter ref de conectar sempre atualizado */
   useEffect(() => { conectarRef.current = conectarSupabase }, [conectarSupabase])
 
   const uploadAnexoItem = useCallback(async (file) => {
@@ -263,7 +246,6 @@ export function AppProvider({ children }) {
     return sb.uploadAnexoLocal(file)
   }, [toast])
 
-  /* ─── Auth ────────────────────────────────────────────── */
   const entrar = useCallback(async (login, senha) => {
     const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
     const senhaH = await hashSenha(senha)
@@ -287,10 +269,7 @@ export function AppProvider({ children }) {
   const logout = useCallback(() => {
     localStorage.removeItem('usuarioLogadoViaLog')
     dispatch({ type: 'SET_USUARIO', payload: null })
-    if (canalPresenca.current) {
-      canalPresenca.current.unsubscribe()
-      canalPresenca.current = null
-    }
+    if (canalPresenca.current) { canalPresenca.current.unsubscribe(); canalPresenca.current = null }
   }, [])
 
   const verificarSenhaAdmin = useCallback(async (senha) => {
@@ -306,19 +285,15 @@ export function AppProvider({ children }) {
     const avatar = dados.nome.split(' ').filter(Boolean).map(x => x[0]).slice(0, 2).join('').toUpperCase() || dados.usuario.slice(0, 2).toUpperCase()
     const senhaH = await hashSenha(dados.senha)
     const novoUser = { ...dados, senha: senhaH, avatar }
-    try {
-      await sb.salvarUsuario(novoUser)
-    } catch { toast('Erro ao salvar usuário na nuvem.', 'warn') }
-    const lista = [...state.usuarios, novoUser]
-    dispatch({ type: 'SET_USUARIOS', payload: lista })
+    try { await sb.salvarUsuario(novoUser) } catch { toast('Erro ao salvar usuário na nuvem.', 'warn') }
+    dispatch({ type: 'SET_USUARIOS', payload: [...state.usuarios, novoUser] })
     toast('Usuário criado.', 'ok')
     return true
   }, [state.usuarios, toast])
 
   const excluirUsuario = useCallback(async (login) => {
     if (login === 'admin') return
-    const lista = state.usuarios.filter(u => u.usuario !== login)
-    dispatch({ type: 'SET_USUARIOS', payload: lista })
+    dispatch({ type: 'SET_USUARIOS', payload: state.usuarios.filter(u => u.usuario !== login) })
     try { await sb.deletarUsuario(login) } catch {}
     toast('Usuário excluído.', 'ok')
   }, [state.usuarios, toast])
@@ -338,13 +313,10 @@ export function AppProvider({ children }) {
     toast('Filial removida.', 'ok')
   }, [state.filiais, toast])
 
-  /* ─── Estadias lançadas ───────────────────────────────── */
   const adicionarLancada = useCallback(async (item) => {
     const novo = { ...item, id: gerarId(), filial: state.usuarioAtual?.filial || 'principal', status: 'Aberto', lancadoPor: state.usuarioAtual?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
-    const lista = [novo, ...state.estadias]
-    dispatch({ type: 'SET_ESTADIAS', payload: lista })
-    const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou estadia lançada', detalhes: `Placa ${novo.placa} | ${novo.valor}` }, ...state.historico].slice(0, 300)
-    dispatch({ type: 'SET_HISTORICO', payload: hist })
+    dispatch({ type: 'SET_ESTADIAS', payload: [novo, ...state.estadias] })
+    dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou estadia lançada', detalhes: `Placa ${novo.placa} | ${novo.valor}` }, ...state.historico].slice(0, 300) })
     feed('Estadia lançada', `Placa ${novo.placa} salva.`, '✅')
     toast('Estadia salva.', 'ok')
     await salvarNuvem(novo, 'lancada')
@@ -359,8 +331,7 @@ export function AppProvider({ children }) {
 
   const marcarFeito = useCallback(async (id) => {
     await atualizarLancada(id, { status: 'Feito', feitoPor: state.usuarioAtual?.usuario || '-', dataFeito: new Date().toLocaleString('pt-BR') })
-    const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Marcou como feito', detalhes: `ID ${id}` }, ...state.historico].slice(0, 300)
-    dispatch({ type: 'SET_HISTORICO', payload: hist })
+    dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Marcou como feito', detalhes: `ID ${id}` }, ...state.historico].slice(0, 300) })
   }, [atualizarLancada, state.usuarioAtual, state.historico])
 
   const finalizar = useCallback(async (id) => {
@@ -372,13 +343,11 @@ export function AppProvider({ children }) {
   }, [atualizarLancada])
 
   const excluirLancada = useCallback(async (id) => {
-    const lista = state.estadias.filter(e => String(e.id) !== String(id))
-    dispatch({ type: 'SET_ESTADIAS', payload: lista })
+    dispatch({ type: 'SET_ESTADIAS', payload: state.estadias.filter(e => String(e.id) !== String(id)) })
     toast('Estadia excluída.', 'ok')
     await deletarNuvem(id)
   }, [state.estadias, deletarNuvem, toast])
 
-  /* ─── A lançar ────────────────────────────────────────── */
   const adicionarALancar = useCallback(async (dados, arquivos) => {
     const anexos = []
     for (const file of arquivos.slice(0, 2)) {
@@ -386,10 +355,8 @@ export function AppProvider({ children }) {
       if (up) anexos.push(up)
     }
     const novo = { ...dados, id: gerarId(), anexos, filial: state.usuarioAtual?.filial || 'principal', status: 'A lançar', criadoPor: state.usuarioAtual?.usuario || '-', dataCriacao: new Date().toLocaleString('pt-BR') }
-    const lista = [novo, ...state.estadiasALancar]
-    dispatch({ type: 'SET_A_LANCAR', payload: lista })
-    const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou pendência', detalhes: `Placa ${novo.placa}` }, ...state.historico].slice(0, 300)
-    dispatch({ type: 'SET_HISTORICO', payload: hist })
+    dispatch({ type: 'SET_A_LANCAR', payload: [novo, ...state.estadiasALancar] })
+    dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou pendência', detalhes: `Placa ${novo.placa}` }, ...state.historico].slice(0, 300) })
     feed('Pendência criada', `Placa ${novo.placa}.`, '📋')
     toast(`Pendência salva com ${anexos.length} anexo(s).`, novo.prioridade === 'Urgente' ? 'warn' : 'ok')
     await salvarNuvem(novo, 'a_lancar')
@@ -397,8 +364,7 @@ export function AppProvider({ children }) {
 
   const abrirParaLancar = useCallback(async (id) => {
     const item = state.estadiasALancar.find(e => String(e.id) === String(id))
-    const lista = state.estadiasALancar.filter(e => String(e.id) !== String(id))
-    dispatch({ type: 'SET_A_LANCAR', payload: lista })
+    dispatch({ type: 'SET_A_LANCAR', payload: state.estadiasALancar.filter(e => String(e.id) !== String(id)) })
     dispatch({ type: 'SET_ABA', payload: 'lancadas' })
     dispatch({ type: 'SET_ITEM_LANCAR', payload: item })
     await deletarNuvem(id)
@@ -414,27 +380,22 @@ export function AppProvider({ children }) {
     if (!calc) { toast('Verifique peso, chegada e saída.', 'err'); return }
     const existente = state.estadias.find(e => String(e.id) === String(id))
     const item = { ...existente, ...dados, ...calc }
-    const lista = state.estadias.map(e => String(e.id) === String(id) ? item : e)
-    dispatch({ type: 'SET_ESTADIAS', payload: lista })
-    const hist = [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Editou estadia', detalhes: `Placa ${item.placa}` }, ...state.historico].slice(0, 300)
-    dispatch({ type: 'SET_HISTORICO', payload: hist })
+    dispatch({ type: 'SET_ESTADIAS', payload: state.estadias.map(e => String(e.id) === String(id) ? item : e) })
+    dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Editou estadia', detalhes: `Placa ${item.placa}` }, ...state.historico].slice(0, 300) })
     feed('Estadia editada', `Placa ${item.placa} atualizada.`, '✏️')
     toast('Estadia atualizada.', 'ok')
     await salvarNuvem(item, 'lancada')
   }, [state.estadias, state.historico, state.usuarioAtual, salvarNuvem, toast, feed])
 
   const excluirALancar = useCallback(async (id) => {
-    const lista = state.estadiasALancar.filter(e => String(e.id) !== String(id))
-    dispatch({ type: 'SET_A_LANCAR', payload: lista })
+    dispatch({ type: 'SET_A_LANCAR', payload: state.estadiasALancar.filter(e => String(e.id) !== String(id)) })
     await deletarNuvem(id)
   }, [state.estadiasALancar, deletarNuvem])
 
-  /* ─── Histórico ───────────────────────────────────────── */
   const limparHistorico = useCallback(() => {
     dispatch({ type: 'SET_HISTORICO', payload: [] })
   }, [])
 
-  /* ─── Backup ──────────────────────────────────────────── */
   const exportarBackup = useCallback(() => {
     const dados = { estadias: state.estadias, estadiasALancar: state.estadiasALancar, historico: state.historico, usuarios: state.usuarios, exportadoEm: new Date().toLocaleString('pt-BR') }
     baixarArquivo('backup-painel-ldc.json', JSON.stringify(dados, null, 2), 'application/json')
@@ -452,23 +413,19 @@ export function AppProvider({ children }) {
     const header = ['Chamado', 'Motorista', 'Transportadora', 'Placa', 'Peso', 'Horas', 'Valor', 'Pago por', 'Prioridade', 'Status', 'Lançado por', 'Data'].join(';')
     const rows = state.estadias.map(e =>
       [e.chamado, e.motorista, e.transportadora, e.placa, e.peso, e.horas, e.valor, e.pagoPor, e.prioridade, e.status, e.lancadoPor, e.dataLancamento]
-        .map(x => `"${String(x || '').replaceAll('"', '""')}"`)
-        .join(';')
+        .map(x => `"${String(x || '').replaceAll('"', '""')}"`).join(';')
     )
     baixarArquivo('estadias-ldc.csv', [header, ...rows].join('\n'), 'text/csv;charset=utf-8')
   }, [state.estadias])
 
-  /* ─── UI ──────────────────────────────────────────────── */
   const mudarAba = useCallback((aba) => dispatch({ type: 'SET_ABA', payload: aba }), [])
   const alternarTema = useCallback(() => dispatch({ type: 'SET_TEMA', payload: state.tema === 'light' ? 'dark' : 'light' }), [state.tema])
   const alternarSom = useCallback(() => dispatch({ type: 'SET_SOM', payload: !state.somAtivo }), [state.somAtivo])
 
-  /* Retorno do contexto */
   const value = {
     ...state,
     supabaseOnline: supabaseOnline.current,
-    toast,
-    feed,
+    toast, feed,
     entrar, logout, criarUsuario, excluirUsuario, verificarSenhaAdmin, criarFilial, excluirFilial,
     adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada,
     adicionarALancar, abrirParaLancar, excluirALancar,
@@ -476,8 +433,7 @@ export function AppProvider({ children }) {
     mudarAba, alternarTema, alternarSom,
     conectarSupabase, sincronizarFila,
     editarLancada, limparItemParaLancar,
-    uploadAnexoItem,
-    dataISOTexto,
+    uploadAnexoItem, dataISOTexto,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>
