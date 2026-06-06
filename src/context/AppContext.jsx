@@ -1,7 +1,7 @@
 import { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react'
 import { defaultUsers } from '../data/defaultUsers'
 import { FILIAIS } from '../data/filiais'
-import { dinheiro, moedaNumero, gerarId, baixarArquivo, dataISOTexto, calcularEstadia } from '../utils/index'
+import { gerarId, baixarArquivo, dataISOTexto, calcularEstadia } from '../utils/index'
 import * as sb from '../lib/supabase'
 
 const hashSenha = async (senha) => {
@@ -15,48 +15,48 @@ const load = (key, fallback) => {
 }
 
 const initialState = {
-  usuarioAtual: load('usuarioLogadoViaLog', null),
-  usuarios: load('usuariosPainelViaLog', defaultUsers),
-  filiais: load('filiaisViaLog', FILIAIS),
-  estadias: load('estadias', []),
-  estadiasALancar: load('estadiasALancar', []),
-  historico: load('historicoEstadias', []),
-  captacoes: load('captacoesViaLog', []),
-  moduloAtual: load('moduloAtualVL', 'estadias'),
-  abaAtiva: 'inicio',
+  usuarioAtual:   load('usuarioLogadoViaLog', null),
+  usuarios:       load('usuariosPainelViaLog', defaultUsers),
+  filiais:        load('filiaisViaLog', FILIAIS),
+  estadias:       load('estadias', []),
+  estadiasALancar:load('estadiasALancar', []),
+  historico:      load('historicoEstadias', []),
+  captacoes:      load('captacoesViaLog', []),
+  moduloAtual:    load('moduloAtualVL', 'estadias'),
+  abaAtiva:       'inicio',
   itemParaLancar: null,
-  tema: load('temaPainelViaLog', 'dark'),
-  somAtivo: load('somPainelViaLog', 'off') === 'on',
-  cloudStatus: 'offline',
-  cloudText: 'Faça login para conectar.',
-  filaNuvem: load('filaSupabaseViaLog', []),
-  ultimoSave: load('ultimoSaveSupabaseViaLog', ''),
+  tema:           load('temaPainelViaLog', 'dark'),
+  somAtivo:       load('somPainelViaLog', 'off') === 'on',
+  cloudStatus:    'offline',
+  cloudText:      'Faça login para conectar.',
+  filaNuvem:      load('filaSupabaseViaLog', []),
+  ultimoSave:     load('ultimoSaveSupabaseViaLog', ''),
   usuariosOnline: [],
-  activityFeed: [],
-  toasts: [],
+  activityFeed:   [],
+  toasts:         [],
 }
 
 function reducer(state, action) {
   switch (action.type) {
-    case 'SET_USUARIO': return { ...state, usuarioAtual: action.payload }
-    case 'SET_USUARIOS': return { ...state, usuarios: action.payload }
-    case 'SET_FILIAIS': return { ...state, filiais: action.payload }
-    case 'SET_ESTADIAS': return { ...state, estadias: action.payload }
-    case 'SET_A_LANCAR': return { ...state, estadiasALancar: action.payload }
+    case 'SET_USUARIO':   return { ...state, usuarioAtual: action.payload }
+    case 'SET_USUARIOS':  return { ...state, usuarios: action.payload }
+    case 'SET_FILIAIS':   return { ...state, filiais: action.payload }
+    case 'SET_ESTADIAS':  return { ...state, estadias: action.payload }
+    case 'SET_A_LANCAR':  return { ...state, estadiasALancar: action.payload }
     case 'SET_HISTORICO': return { ...state, historico: action.payload }
     case 'SET_CAPTACOES': return { ...state, captacoes: action.payload }
-    case 'SET_MODULO': return { ...state, moduloAtual: action.payload }
-    case 'SET_ABA': return { ...state, abaAtiva: action.payload }
+    case 'SET_MODULO':    return { ...state, moduloAtual: action.payload }
+    case 'SET_ABA':       return { ...state, abaAtiva: action.payload }
     case 'SET_ITEM_LANCAR': return { ...state, itemParaLancar: action.payload }
-    case 'SET_TEMA': return { ...state, tema: action.payload }
-    case 'SET_SOM': return { ...state, somAtivo: action.payload }
-    case 'SET_CLOUD': return { ...state, cloudStatus: action.status, cloudText: action.text }
-    case 'SET_FILA': return { ...state, filaNuvem: action.payload }
+    case 'SET_TEMA':      return { ...state, tema: action.payload }
+    case 'SET_SOM':       return { ...state, somAtivo: action.payload }
+    case 'SET_CLOUD':     return { ...state, cloudStatus: action.status, cloudText: action.text }
+    case 'SET_FILA':      return { ...state, filaNuvem: action.payload }
     case 'SET_ULTIMO_SAVE': return { ...state, ultimoSave: action.payload }
-    case 'SET_ONLINE': return { ...state, usuariosOnline: action.payload }
-    case 'ADD_FEED': return { ...state, activityFeed: [action.payload, ...state.activityFeed].slice(0, 8) }
-    case 'ADD_TOAST': return { ...state, toasts: [...state.toasts, action.payload] }
-    case 'REMOVE_TOAST': return { ...state, toasts: state.toasts.filter(t => t.id !== action.id) }
+    case 'SET_ONLINE':    return { ...state, usuariosOnline: action.payload }
+    case 'ADD_FEED':      return { ...state, activityFeed: [action.payload, ...state.activityFeed].slice(0, 8) }
+    case 'ADD_TOAST':     return { ...state, toasts: [...state.toasts, action.payload] }
+    case 'REMOVE_TOAST':  return { ...state, toasts: state.toasts.filter(t => t.id !== action.id) }
     default: return state
   }
 }
@@ -66,20 +66,29 @@ export const useApp = () => useContext(AppCtx)
 
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState)
-  const supabaseOnline = useRef(false)
-  const canalRealtime = useRef(null)
-  const canalPresenca = useRef(null)
-  const recebendoNuvem = useRef(false)
-  const conectarRef = useRef(null)
-  const usuarioRef = useRef(initialState.usuarioAtual)
+  const supabaseOnline  = useRef(false)
+  const canalRealtime   = useRef(null)
+  const canalPresenca   = useRef(null)
+  const recebendoNuvem  = useRef(false)
+  const conectarRef     = useRef(null)
+  const usuarioRef      = useRef(initialState.usuarioAtual)
 
+  // ── Bootstrap: carrega usuários e filiais do novo banco ─────────────
   useEffect(() => {
     if (!navigator.onLine) return
     const init = async () => {
       try {
-        const remotos = await sb.carregarUsuarios()
-        if (remotos.length > 0) dispatch({ type: 'SET_USUARIOS', payload: remotos })
-        else for (const u of initialState.usuarios) await sb.salvarUsuario(u).catch(() => {})
+        // Filiais
+        const filiais = await sb.baixarFiliais().catch(() => null)
+        if (filiais?.length) dispatch({ type: 'SET_FILIAIS', payload: filiais })
+
+        // Usuários
+        const remotos = await sb.carregarUsuarios().catch(() => [])
+        if (remotos.length > 0) {
+          dispatch({ type: 'SET_USUARIOS', payload: remotos })
+        } else {
+          for (const u of initialState.usuarios) await sb.salvarUsuario(u).catch(() => {})
+        }
       } catch {}
       if (initialState.usuarioAtual) {
         iniciarPresenca(initialState.usuarioAtual)
@@ -89,32 +98,23 @@ export function AppProvider({ children }) {
     init()
   }, [])
 
+  // ── Persistência local ───────────────────────────────────────────────
   useEffect(() => {
-    localStorage.setItem('usuariosPainelViaLog', JSON.stringify(state.usuarios))
-    localStorage.setItem('filiaisViaLog', JSON.stringify(state.filiais))
-    localStorage.setItem('estadias', JSON.stringify(state.estadias))
-    localStorage.setItem('estadiasALancar', JSON.stringify(state.estadiasALancar))
-    localStorage.setItem('historicoEstadias', JSON.stringify(state.historico))
-    localStorage.setItem('captacoesViaLog', JSON.stringify(state.captacoes))
+    localStorage.setItem('usuariosPainelViaLog',   JSON.stringify(state.usuarios))
+    localStorage.setItem('filiaisViaLog',          JSON.stringify(state.filiais))
+    localStorage.setItem('estadias',               JSON.stringify(state.estadias))
+    localStorage.setItem('estadiasALancar',        JSON.stringify(state.estadiasALancar))
+    localStorage.setItem('historicoEstadias',      JSON.stringify(state.historico))
+    localStorage.setItem('captacoesViaLog',        JSON.stringify(state.captacoes))
   }, [state.usuarios, state.filiais, state.estadias, state.estadiasALancar, state.historico, state.captacoes])
 
-  useEffect(() => {
-    localStorage.setItem('moduloAtualVL', state.moduloAtual)
-  }, [state.moduloAtual])
-
+  useEffect(() => { localStorage.setItem('moduloAtualVL', state.moduloAtual) }, [state.moduloAtual])
   useEffect(() => {
     localStorage.setItem('temaPainelViaLog', state.tema)
     document.documentElement.classList.toggle('dark', state.tema === 'dark')
   }, [state.tema])
-
-  useEffect(() => {
-    localStorage.setItem('somPainelViaLog', state.somAtivo ? 'on' : 'off')
-  }, [state.somAtivo])
-
-  useEffect(() => {
-    localStorage.setItem('filaSupabaseViaLog', JSON.stringify(state.filaNuvem))
-  }, [state.filaNuvem])
-
+  useEffect(() => { localStorage.setItem('somPainelViaLog', state.somAtivo ? 'on' : 'off') }, [state.somAtivo])
+  useEffect(() => { localStorage.setItem('filaSupabaseViaLog', JSON.stringify(state.filaNuvem)) }, [state.filaNuvem])
   useEffect(() => { usuarioRef.current = state.usuarioAtual }, [state.usuarioAtual])
 
   const iniciarPresenca = useCallback((usuario) => {
@@ -141,17 +141,11 @@ export function AppProvider({ children }) {
     dispatch({ type: 'ADD_FEED', payload: { titulo, texto, icone, tempo: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) } })
   }, [])
 
-  const registrarHistorico = useCallback((acao, detalhes) => {
-    const novo = { data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao, detalhes }
-    const hist = [novo, ...state.historico].slice(0, 300)
-    dispatch({ type: 'SET_HISTORICO', payload: hist })
-    feed(acao, detalhes, '📋')
-  }, [state.usuarioAtual, state.historico, feed])
-
   const setCloud = useCallback((status, text) => {
     dispatch({ type: 'SET_CLOUD', status, text })
   }, [])
 
+  // ── Nuvem: salvar ────────────────────────────────────────────────────
   const salvarNuvem = useCallback(async (item, tipo) => {
     const filial = state.usuarioAtual?.filial || 'principal'
     if (!supabaseOnline.current || !navigator.onLine) {
@@ -174,27 +168,39 @@ export function AppProvider({ children }) {
     }
   }, [state.filaNuvem, state.usuarioAtual, setCloud])
 
-  const deletarNuvem = useCallback(async (id) => {
+  // ── Nuvem: deletar (tipo obrigatório) ────────────────────────────────
+  const deletarNuvem = useCallback(async (id, tipo = 'lancada') => {
     if (!supabaseOnline.current || !navigator.onLine) {
-      const fila = [...state.filaNuvem, { acao: 'delete', local_id: String(id) }]
+      const fila = [...state.filaNuvem, { acao: 'delete', local_id: String(id), tipo }]
       dispatch({ type: 'SET_FILA', payload: fila })
       return
     }
-    try { await sb.deletar(id) } catch {
-      const fila = [...state.filaNuvem, { acao: 'delete', local_id: String(id) }]
+    try { await sb.deletar(id, tipo) } catch {
+      const fila = [...state.filaNuvem, { acao: 'delete', local_id: String(id), tipo }]
       dispatch({ type: 'SET_FILA', payload: fila })
     }
   }, [state.filaNuvem])
 
+  // ── Sincronizar fila offline ─────────────────────────────────────────
   const sincronizarFila = useCallback(async () => {
     if (!navigator.onLine || !state.filaNuvem.length) return
     setCloud('syncing', `Subindo ${state.filaNuvem.length} item(s) offline...`)
     const restante = []
-    const client = sb.getClient()
     for (const item of state.filaNuvem) {
       try {
-        if (item.acao === 'upsert') await client.from(sb.TABLE).upsert(item.payload, { onConflict: 'local_id' })
-        if (item.acao === 'delete') await client.from(sb.TABLE).delete().eq('local_id', String(item.local_id))
+        if (item.acao === 'upsert') {
+          const { _tipo, _motorista_nome, _motorista_tel, _motorista_cidade, ...row } = item.payload
+          if (_tipo === 'captacao') {
+            await sb.salvar(row.dados || row, 'captacao', row.filial_id)
+          } else if (_tipo === 'a_lancar') {
+            await sb.salvar(row.dados || row, 'a_lancar', row.filial_id)
+          } else {
+            await sb.salvar(row.dados || row, 'lancada', row.filial_id)
+          }
+        }
+        if (item.acao === 'delete') {
+          await sb.deletar(item.local_id, item.tipo || 'lancada')
+        }
       } catch { restante.push(item) }
     }
     dispatch({ type: 'SET_FILA', payload: restante })
@@ -204,24 +210,37 @@ export function AppProvider({ children }) {
     setCloud(restante.length ? 'offline' : 'online', restante.length ? 'Ainda há pendências.' : 'Tudo sincronizado.')
   }, [state.filaNuvem, setCloud])
 
+  // ── Baixar dados da nuvem ────────────────────────────────────────────
   const baixarNuvem = useCallback(async (aviso = true) => {
     if (!supabaseOnline.current) return
     try {
       const isAdmin = state.usuarioAtual?.cargo === 'Admin'
-      const filial = isAdmin ? null : (state.usuarioAtual?.filial || 'principal')
+      const filial  = isAdmin ? null : (state.usuarioAtual?.filial || 'principal')
+
+      // Estadias
       const data = await sb.baixarTodos(filial)
       recebendoNuvem.current = true
-      const lancadas = data.filter(x => x.tipo === 'lancada').map(x => x.dados).filter(Boolean)
+      const lancadas  = data.filter(x => x.tipo === 'lancada').map(x => x.dados).filter(Boolean)
       const pendentes = data.filter(x => x.tipo === 'a_lancar').map(x => x.dados).filter(Boolean)
       if (lancadas.length || pendentes.length) {
-        dispatch({ type: 'SET_ESTADIAS', payload: lancadas })
-        dispatch({ type: 'SET_A_LANCAR', payload: pendentes })
+        dispatch({ type: 'SET_ESTADIAS',  payload: lancadas })
+        dispatch({ type: 'SET_A_LANCAR',  payload: pendentes })
       }
+
+      // Captações
+      const caps = await sb.baixarCaptacoes(filial).catch(() => [])
+      if (caps.length) dispatch({ type: 'SET_CAPTACOES', payload: caps })
+
+      // Filiais (sempre atualiza)
+      const filiais = await sb.baixarFiliais().catch(() => null)
+      if (filiais?.length) dispatch({ type: 'SET_FILIAIS', payload: filiais })
+
       recebendoNuvem.current = false
       if (aviso) toast('Dados baixados da nuvem.', 'ok')
     } catch { recebendoNuvem.current = false }
   }, [toast, state.usuarioAtual])
 
+  // ── Conectar Supabase ────────────────────────────────────────────────
   const conectarSupabase = useCallback(async () => {
     if (!navigator.onLine) { setCloud('offline', 'Sem internet.'); return }
     if (supabaseOnline.current) return
@@ -241,7 +260,7 @@ export function AppProvider({ children }) {
       toast('Nuvem conectada.', 'ok')
     } catch {
       supabaseOnline.current = false
-      canalRealtime.current = null
+      canalRealtime.current  = null
       setCloud('offline', 'Erro na nuvem. Verifique o Supabase.')
     }
   }, [sincronizarFila, baixarNuvem, setCloud, feed, toast])
@@ -255,9 +274,10 @@ export function AppProvider({ children }) {
     return sb.uploadAnexoLocal(file)
   }, [toast])
 
+  // ── Login ────────────────────────────────────────────────────────────
   const entrar = useCallback(async (login, senha, modulo = 'estadias') => {
     const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
-    const senhaH = await hashSenha(senha)
+    const senhaH   = await hashSenha(senha)
     const user = usuarios.find(u => {
       if (u.usuario.toLowerCase() !== login.toLowerCase()) return false
       return isHash(u.senha) ? u.senha === senhaH : u.senha === senha
@@ -268,7 +288,7 @@ export function AppProvider({ children }) {
       dispatch({ type: 'SET_USUARIOS', payload: lista })
     }
     dispatch({ type: 'SET_USUARIO', payload: user })
-    dispatch({ type: 'SET_MODULO', payload: modulo })
+    dispatch({ type: 'SET_MODULO',  payload: modulo })
     localStorage.setItem('usuarioLogadoViaLog', JSON.stringify(user))
     localStorage.setItem('moduloAtualVL', modulo)
     iniciarPresenca(user)
@@ -285,7 +305,7 @@ export function AppProvider({ children }) {
 
   const verificarSenhaAdmin = useCallback(async (senha) => {
     const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
-    const admin = usuarios.find(u => u.usuario === 'admin')
+    const admin    = usuarios.find(u => u.usuario === 'admin')
     if (!admin) return false
     const senhaH = await hashSenha(senha)
     return isHash(admin.senha) ? admin.senha === senhaH : admin.senha === senha
@@ -324,9 +344,10 @@ export function AppProvider({ children }) {
     toast('Filial removida.', 'ok')
   }, [state.filiais, toast])
 
+  // ── Estadias lançadas ────────────────────────────────────────────────
   const adicionarLancada = useCallback(async (item) => {
     const novo = { ...item, id: gerarId(), filial: state.usuarioAtual?.filial || 'principal', status: 'Aberto', lancadoPor: state.usuarioAtual?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
-    dispatch({ type: 'SET_ESTADIAS', payload: [novo, ...state.estadias] })
+    dispatch({ type: 'SET_ESTADIAS',  payload: [novo, ...state.estadias] })
     dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou estadia lançada', detalhes: `Placa ${novo.placa} | ${novo.valor}` }, ...state.historico].slice(0, 300) })
     feed('Estadia lançada', `Placa ${novo.placa} salva.`, '✅')
     toast('Estadia salva.', 'ok')
@@ -356,7 +377,7 @@ export function AppProvider({ children }) {
   const excluirLancada = useCallback(async (id) => {
     dispatch({ type: 'SET_ESTADIAS', payload: state.estadias.filter(e => String(e.id) !== String(id)) })
     toast('Estadia excluída.', 'ok')
-    await deletarNuvem(id)
+    await deletarNuvem(id, 'lancada')
   }, [state.estadias, deletarNuvem, toast])
 
   const adicionarALancar = useCallback(async (dados, arquivos) => {
@@ -366,7 +387,7 @@ export function AppProvider({ children }) {
       if (up) anexos.push(up)
     }
     const novo = { ...dados, id: gerarId(), anexos, filial: state.usuarioAtual?.filial || 'principal', status: 'A lançar', criadoPor: state.usuarioAtual?.usuario || '-', dataCriacao: new Date().toLocaleString('pt-BR') }
-    dispatch({ type: 'SET_A_LANCAR', payload: [novo, ...state.estadiasALancar] })
+    dispatch({ type: 'SET_A_LANCAR',  payload: [novo, ...state.estadiasALancar] })
     dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: state.usuarioAtual?.usuario || '-', acao: 'Adicionou pendência', detalhes: `Placa ${novo.placa}` }, ...state.historico].slice(0, 300) })
     feed('Pendência criada', `Placa ${novo.placa}.`, '📋')
     toast(`Pendência salva com ${anexos.length} anexo(s).`, novo.prioridade === 'Urgente' ? 'warn' : 'ok')
@@ -375,10 +396,10 @@ export function AppProvider({ children }) {
 
   const abrirParaLancar = useCallback(async (id) => {
     const item = state.estadiasALancar.find(e => String(e.id) === String(id))
-    dispatch({ type: 'SET_A_LANCAR', payload: state.estadiasALancar.filter(e => String(e.id) !== String(id)) })
-    dispatch({ type: 'SET_ABA', payload: 'lancadas' })
+    dispatch({ type: 'SET_A_LANCAR',    payload: state.estadiasALancar.filter(e => String(e.id) !== String(id)) })
+    dispatch({ type: 'SET_ABA',         payload: 'lancadas' })
     dispatch({ type: 'SET_ITEM_LANCAR', payload: item })
-    await deletarNuvem(id)
+    await deletarNuvem(id, 'a_lancar')
     toast('Preencha os dados e salve a estadia.', 'ok')
   }, [state.estadiasALancar, deletarNuvem, toast])
 
@@ -400,7 +421,7 @@ export function AppProvider({ children }) {
 
   const excluirALancar = useCallback(async (id) => {
     dispatch({ type: 'SET_A_LANCAR', payload: state.estadiasALancar.filter(e => String(e.id) !== String(id)) })
-    await deletarNuvem(id)
+    await deletarNuvem(id, 'a_lancar')
   }, [state.estadiasALancar, deletarNuvem])
 
   const limparHistorico = useCallback(() => {
@@ -413,15 +434,15 @@ export function AppProvider({ children }) {
   }, [state])
 
   const importarBackup = useCallback((dados) => {
-    dispatch({ type: 'SET_ESTADIAS', payload: dados.estadias || [] })
-    dispatch({ type: 'SET_A_LANCAR', payload: dados.estadiasALancar || [] })
+    dispatch({ type: 'SET_ESTADIAS',  payload: dados.estadias || [] })
+    dispatch({ type: 'SET_A_LANCAR',  payload: dados.estadiasALancar || [] })
     dispatch({ type: 'SET_HISTORICO', payload: dados.historico || [] })
     if (dados.usuarios) dispatch({ type: 'SET_USUARIOS', payload: dados.usuarios })
     toast('Backup importado.', 'ok')
   }, [toast])
 
   const exportarCSV = useCallback(() => {
-    const header = ['Chamado', 'Motorista', 'Transportadora', 'Placa', 'Peso', 'Horas', 'Valor', 'Pago por', 'Prioridade', 'Status', 'Lançado por', 'Data'].join(';')
+    const header = ['Chamado','Motorista','Transportadora','Placa','Peso','Horas','Valor','Pago por','Prioridade','Status','Lançado por','Data'].join(';')
     const rows = state.estadias.map(e =>
       [e.chamado, e.motorista, e.transportadora, e.placa, e.peso, e.horas, e.valor, e.pagoPor, e.prioridade, e.status, e.lancadoPor, e.dataLancamento]
         .map(x => `"${String(x || '').replaceAll('"', '""')}"`).join(';')
@@ -429,54 +450,59 @@ export function AppProvider({ children }) {
     baixarArquivo('estadias-ldc.csv', [header, ...rows].join('\n'), 'text/csv;charset=utf-8')
   }, [state.estadias])
 
-  const adicionarCaptacao = useCallback((dados) => {
+  // ── Captações ────────────────────────────────────────────────────────
+  const adicionarCaptacao = useCallback(async (dados) => {
     const nova = {
       ...dados,
       id: gerarId(),
-      captadoPor: state.usuarioAtual?.usuario || '-',
-      nomeOperador: state.usuarioAtual?.nome || '-',
-      filial: state.usuarioAtual?.filial || 'principal',
-      dataCaptacao: new Date().toLocaleString('pt-BR'),
-      status: 'Contato captado',
+      captadoPor:    state.usuarioAtual?.usuario || '-',
+      nomeOperador:  state.usuarioAtual?.nome    || '-',
+      filial:        state.usuarioAtual?.filial  || 'principal',
+      dataCaptacao:  new Date().toLocaleString('pt-BR'),
+      status:        'Contato captado',
       historico: [{
-        status: 'Contato captado',
-        obs: dados.obs || '',
+        status:       'Contato captado',
+        obs:          dados.obs || '',
         atualizadoPor: state.usuarioAtual?.usuario || '-',
-        dataHora: new Date().toLocaleString('pt-BR'),
+        dataHora:     new Date().toLocaleString('pt-BR'),
       }],
     }
     dispatch({ type: 'SET_CAPTACOES', payload: [nova, ...state.captacoes] })
     toast('Captação registrada.', 'ok')
-  }, [state.captacoes, state.usuarioAtual, toast])
+    await salvarNuvem(nova, 'captacao')
+  }, [state.captacoes, state.usuarioAtual, salvarNuvem, toast])
 
-  const atualizarStatusCaptacao = useCallback((id, novoStatus, obs) => {
+  const atualizarStatusCaptacao = useCallback(async (id, novoStatus, obs) => {
     const atualizado = state.captacoes.map(c => {
       if (String(c.id) !== String(id)) return c
       const entrada = {
-        status: novoStatus,
-        obs: obs || '',
+        status:        novoStatus,
+        obs:           obs || '',
         atualizadoPor: state.usuarioAtual?.usuario || '-',
-        dataHora: new Date().toLocaleString('pt-BR'),
+        dataHora:      new Date().toLocaleString('pt-BR'),
       }
       return { ...c, status: novoStatus, historico: [...(c.historico || []), entrada] }
     })
     dispatch({ type: 'SET_CAPTACOES', payload: atualizado })
     toast(`Status: ${novoStatus}`, 'ok')
-  }, [state.captacoes, state.usuarioAtual, toast])
+    const item = atualizado.find(c => String(c.id) === String(id))
+    if (item) await salvarNuvem(item, 'captacao')
+  }, [state.captacoes, state.usuarioAtual, salvarNuvem, toast])
 
-  const excluirCaptacao = useCallback((id) => {
+  const excluirCaptacao = useCallback(async (id) => {
     dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.filter(c => String(c.id) !== String(id)) })
     toast('Captação excluída.', 'ok')
-  }, [state.captacoes, toast])
+    await deletarNuvem(id, 'captacao')
+  }, [state.captacoes, deletarNuvem, toast])
 
   const mudarModulo = useCallback((modulo) => {
     dispatch({ type: 'SET_MODULO', payload: modulo })
     localStorage.setItem('moduloAtualVL', modulo)
   }, [])
 
-  const mudarAba = useCallback((aba) => dispatch({ type: 'SET_ABA', payload: aba }), [])
+  const mudarAba     = useCallback((aba)  => dispatch({ type: 'SET_ABA',  payload: aba  }), [])
   const alternarTema = useCallback(() => dispatch({ type: 'SET_TEMA', payload: state.tema === 'light' ? 'dark' : 'light' }), [state.tema])
-  const alternarSom = useCallback(() => dispatch({ type: 'SET_SOM', payload: !state.somAtivo }), [state.somAtivo])
+  const alternarSom  = useCallback(() => dispatch({ type: 'SET_SOM',  payload: !state.somAtivo }), [state.somAtivo])
 
   const value = {
     ...state,
