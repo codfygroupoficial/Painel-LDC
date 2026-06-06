@@ -22,6 +22,7 @@ const initialState = {
   estadiasALancar: load('estadiasALancar', []),
   historico: load('historicoEstadias', []),
   captacoes: load('captacoesViaLog', []),
+  moduloAtual: load('moduloAtualVL', 'estadias'),
   abaAtiva: 'inicio',
   itemParaLancar: null,
   tema: load('temaPainelViaLog', 'dark'),
@@ -44,6 +45,7 @@ function reducer(state, action) {
     case 'SET_A_LANCAR': return { ...state, estadiasALancar: action.payload }
     case 'SET_HISTORICO': return { ...state, historico: action.payload }
     case 'SET_CAPTACOES': return { ...state, captacoes: action.payload }
+    case 'SET_MODULO': return { ...state, moduloAtual: action.payload }
     case 'SET_ABA': return { ...state, abaAtiva: action.payload }
     case 'SET_ITEM_LANCAR': return { ...state, itemParaLancar: action.payload }
     case 'SET_TEMA': return { ...state, tema: action.payload }
@@ -95,6 +97,10 @@ export function AppProvider({ children }) {
     localStorage.setItem('historicoEstadias', JSON.stringify(state.historico))
     localStorage.setItem('captacoesViaLog', JSON.stringify(state.captacoes))
   }, [state.usuarios, state.filiais, state.estadias, state.estadiasALancar, state.historico, state.captacoes])
+
+  useEffect(() => {
+    localStorage.setItem('moduloAtualVL', state.moduloAtual)
+  }, [state.moduloAtual])
 
   useEffect(() => {
     localStorage.setItem('temaPainelViaLog', state.tema)
@@ -249,7 +255,7 @@ export function AppProvider({ children }) {
     return sb.uploadAnexoLocal(file)
   }, [toast])
 
-  const entrar = useCallback(async (login, senha) => {
+  const entrar = useCallback(async (login, senha, modulo = 'estadias') => {
     const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || state.usuarios
     const senhaH = await hashSenha(senha)
     const user = usuarios.find(u => {
@@ -262,7 +268,9 @@ export function AppProvider({ children }) {
       dispatch({ type: 'SET_USUARIOS', payload: lista })
     }
     dispatch({ type: 'SET_USUARIO', payload: user })
+    dispatch({ type: 'SET_MODULO', payload: modulo })
     localStorage.setItem('usuarioLogadoViaLog', JSON.stringify(user))
+    localStorage.setItem('moduloAtualVL', modulo)
     iniciarPresenca(user)
     setTimeout(() => conectarSupabase(), 100)
     feed('Login', `${user.nome} entrou no painel.`, '👤')
@@ -426,22 +434,45 @@ export function AppProvider({ children }) {
       ...dados,
       id: gerarId(),
       captadoPor: state.usuarioAtual?.usuario || '-',
-      carregou: false,
-      data: new Date().toLocaleString('pt-BR'),
+      nomeOperador: state.usuarioAtual?.nome || '-',
       filial: state.usuarioAtual?.filial || 'principal',
+      dataCaptacao: new Date().toLocaleString('pt-BR'),
+      status: 'Contato captado',
+      historico: [{
+        status: 'Contato captado',
+        obs: dados.obs || '',
+        atualizadoPor: state.usuarioAtual?.usuario || '-',
+        dataHora: new Date().toLocaleString('pt-BR'),
+      }],
     }
     dispatch({ type: 'SET_CAPTACOES', payload: [nova, ...state.captacoes] })
-    toast('Contato salvo.', 'ok')
+    toast('Captação registrada.', 'ok')
   }, [state.captacoes, state.usuarioAtual, toast])
 
-  const marcarCarregou = useCallback((id) => {
-    dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.map(c => String(c.id) === String(id) ? { ...c, carregou: !c.carregou } : c) })
-  }, [state.captacoes])
+  const atualizarStatusCaptacao = useCallback((id, novoStatus, obs) => {
+    const atualizado = state.captacoes.map(c => {
+      if (String(c.id) !== String(id)) return c
+      const entrada = {
+        status: novoStatus,
+        obs: obs || '',
+        atualizadoPor: state.usuarioAtual?.usuario || '-',
+        dataHora: new Date().toLocaleString('pt-BR'),
+      }
+      return { ...c, status: novoStatus, historico: [...(c.historico || []), entrada] }
+    })
+    dispatch({ type: 'SET_CAPTACOES', payload: atualizado })
+    toast(`Status: ${novoStatus}`, 'ok')
+  }, [state.captacoes, state.usuarioAtual, toast])
 
   const excluirCaptacao = useCallback((id) => {
     dispatch({ type: 'SET_CAPTACOES', payload: state.captacoes.filter(c => String(c.id) !== String(id)) })
-    toast('Contato excluído.', 'ok')
+    toast('Captação excluída.', 'ok')
   }, [state.captacoes, toast])
+
+  const mudarModulo = useCallback((modulo) => {
+    dispatch({ type: 'SET_MODULO', payload: modulo })
+    localStorage.setItem('moduloAtualVL', modulo)
+  }, [])
 
   const mudarAba = useCallback((aba) => dispatch({ type: 'SET_ABA', payload: aba }), [])
   const alternarTema = useCallback(() => dispatch({ type: 'SET_TEMA', payload: state.tema === 'light' ? 'dark' : 'light' }), [state.tema])
@@ -455,11 +486,11 @@ export function AppProvider({ children }) {
     adicionarLancada, marcarFeito, finalizar, reabrir, excluirLancada,
     adicionarALancar, abrirParaLancar, excluirALancar,
     limparHistorico, exportarBackup, importarBackup, exportarCSV,
-    mudarAba, alternarTema, alternarSom,
+    mudarAba, mudarModulo, alternarTema, alternarSom,
     conectarSupabase, sincronizarFila,
     editarLancada, limparItemParaLancar,
     uploadAnexoItem, dataISOTexto,
-    adicionarCaptacao, marcarCarregou, excluirCaptacao,
+    adicionarCaptacao, atualizarStatusCaptacao, excluirCaptacao,
   }
 
   return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>

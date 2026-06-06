@@ -14,10 +14,94 @@ import Captacao from './pages/Captacao'
 import Backup from './pages/Backup'
 import Admin from './pages/Admin'
 
+function PainelCaptacao() {
+  const { mudarModulo, usuarioAtual, logout, alternarTema, tema } = useApp()
+  const isAdmin = usuarioAtual?.cargo === 'Admin'
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Inter', system-ui, sans-serif" }}>
+      <div style={{
+        background: 'var(--card)',
+        borderBottom: '1px solid var(--line)',
+        padding: '0 20px',
+        height: 56,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 20,
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 9,
+            background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 16, fontWeight: 900, color: 'white', flexShrink: 0,
+          }}>VL</div>
+          <div>
+            <div style={{ fontWeight: 900, fontSize: 14, color: 'var(--text)', lineHeight: 1.1 }}>Via Log</div>
+            <div style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600, letterSpacing: '.3px' }}>CENTRAL DE CAPTAÇÃO</div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {usuarioAtual?.filial && (
+            <span style={{
+              fontSize: 11, fontWeight: 700, color: 'var(--muted)',
+              background: 'var(--bg)', border: '1px solid var(--line)',
+              padding: '3px 10px', borderRadius: 999,
+            }}>{usuarioAtual.filial}</span>
+          )}
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, fontWeight: 900, color: 'white', flexShrink: 0,
+          }}>{usuarioAtual?.avatar || '?'}</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{usuarioAtual?.nome}</div>
+          {isAdmin && (
+            <button
+              onClick={() => mudarModulo('estadias')}
+              style={{
+                padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                background: 'rgba(37,99,235,0.12)', color: '#60a5fa',
+                border: '1px solid rgba(37,99,235,0.25)', marginLeft: 4,
+              }}
+            >← Estadias</button>
+          )}
+          <button
+            onClick={() => alternarTema()}
+            style={{
+              width: 30, height: 30, borderRadius: 8, cursor: 'pointer',
+              background: 'var(--bg)', border: '1px solid var(--line)',
+              color: 'var(--muted)', fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >{tema === 'dark' ? '☀️' : '🌙'}</button>
+          <button
+            onClick={logout}
+            style={{
+              padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              background: 'var(--bg)', color: 'var(--muted)',
+              border: '1px solid var(--line)',
+            }}
+          >Sair</button>
+        </div>
+      </div>
+
+      <main className="container" style={{ paddingTop: 20, paddingBottom: 40 }}>
+        <LivePanel />
+        <Captacao />
+      </main>
+    </div>
+  )
+}
+
 function Painel() {
   const { abaAtiva, mudarAba } = useApp()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [showCommand, setShowCommand] = useState(false)
   const formLancadaRef = useRef()
   const formALancarRef = useRef()
 
@@ -36,17 +120,6 @@ function Painel() {
     setTimeout(() => formALancarRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
   }
 
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setShowCommand(true)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
-
   return (
     <div className="app" style={{ display: 'block' }}>
       {sidebarOpen && (
@@ -56,7 +129,7 @@ function Painel() {
         />
       )}
 
-      <div className={`app-layout`}>
+      <div className="app-layout">
         <div style={sidebarOpen ? { transform: 'translateX(0)' } : {}}>
           <Sidebar onFechar={() => setSidebarOpen(false)} />
         </div>
@@ -70,7 +143,6 @@ function Painel() {
             {abaAtiva === 'inicio' && <Dashboard onNovaLancada={focarLancada} onNovaPendencia={focarALancar} />}
             {abaAtiva === 'lancadas' && <EstadiaLancada formRef={formLancadaRef} />}
             {abaAtiva === 'alancar' && <EstadiaALancar formRef={formALancarRef} />}
-            {abaAtiva === 'captacao' && <Captacao />}
             {abaAtiva === 'historico' && <Historico />}
             {abaAtiva === 'backup' && <Backup />}
             {abaAtiva === 'admin' && <Admin />}
@@ -84,7 +156,7 @@ function Painel() {
 }
 
 export default function App() {
-  const { usuarioAtual } = useApp()
+  const { usuarioAtual, moduloAtual } = useApp()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -96,7 +168,8 @@ export default function App() {
   return (
     <>
       {!usuarioAtual && <Login />}
-      {usuarioAtual && <Painel />}
+      {usuarioAtual && moduloAtual === 'captacao' && <PainelCaptacao />}
+      {usuarioAtual && moduloAtual !== 'captacao' && <Painel />}
       <Toast />
     </>
   )

@@ -11,21 +11,27 @@ const icons = {
 }
 
 const ABAS = [
-  { id: 'inicio',    label: 'Início',              group: 'main' },
-  { id: 'lancadas',  label: 'Estadias lançadas',    group: 'main' },
-  { id: 'alancar',   label: 'A lançar',             group: 'main' },
-  { id: 'captacao',  label: 'Captação',              group: 'main' },
-  { id: 'historico', label: 'Histórico',            group: 'extra' },
-  { id: 'backup',    label: 'Backup',               group: 'extra' },
+  { id: 'inicio',    label: 'Início',           group: 'main' },
+  { id: 'lancadas',  label: 'Estadias lançadas', group: 'main' },
+  { id: 'alancar',   label: 'A lançar',          group: 'main' },
+  { id: 'historico', label: 'Histórico',         group: 'extra' },
+  { id: 'backup',    label: 'Backup',            group: 'extra' },
 ]
 
 export default function Sidebar({ onFechar }) {
-  const { abaAtiva, mudarAba, estadiasALancar, cloudStatus, cloudText, usuarioAtual } = useApp()
+  const { abaAtiva, mudarAba, mudarModulo, estadiasALancar, cloudStatus, cloudText, usuarioAtual } = useApp()
   const isAdmin = usuarioAtual?.cargo === 'Admin'
 
-  const handleTab = (id) => { mudarAba(id); onFechar?.() }
+  const handleTab = (id) => {
+    if (id === 'captacao') {
+      mudarModulo('captacao')
+    } else {
+      mudarAba(id)
+    }
+    onFechar?.()
+  }
 
-  const mainAbas  = ABAS.filter(a => a.group === 'main')
+  const mainAbas = ABAS.filter(a => a.group === 'main')
   const extraAbas = ABAS.filter(a => a.group === 'extra')
 
   return (
@@ -46,6 +52,12 @@ export default function Sidebar({ onFechar }) {
             )}
           </button>
         ))}
+
+        {/* Captação como módulo separado */}
+        <button className="tab" onClick={() => handleTab('captacao')} style={{ marginTop: 4 }}>
+          <span className="tab-icon">{icons.captacao}</span>
+          <span className="tab-label">Captação 🚛</span>
+        </button>
 
         <div className="sidebar-divider" />
         <div className="sidebar-section-label">Ferramentas</div>
