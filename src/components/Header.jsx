@@ -9,6 +9,11 @@ export default function Header({ onMenuMobile }) {
   const [showConfig, setShowConfig] = useState(false)
   const [showCommand, setShowCommand] = useState(false)
 
+  const irParaCaptacao = () => {
+    localStorage.setItem('moduloInicialViaLog', 'captacao')
+    window.location.reload()
+  }
+
   return (
     <>
       <header className="topbar">
@@ -33,6 +38,11 @@ export default function Header({ onMenuMobile }) {
                 <small>{cloudText?.slice(0, 28)}{cloudText?.length > 28 ? '…' : ''}</small>
               </div>
             </div>
+
+            <button className="btn-light" onClick={irParaCaptacao} title="Ir para o Painel de Captação" style={{ fontSize: 12, gap: 6 }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 18V6M4 18h16M8 15v-4M12 15V8m4 7v-6M7 5h10" /></svg>
+              <span>Captação</span>
+            </button>
 
             <NotificationBell />
 
