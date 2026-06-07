@@ -1,38 +1,54 @@
 import { useApp } from '../context/AppContext'
 
+const Svg = ({ children }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+)
+
 const icons = {
-  inicio: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>),
-  lancadas: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>),
-  alancar: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>),
-  historico: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>),
-  backup: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" /></svg>),
-  captacao: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>),
-  admin: (<svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>),
+  inicio: <Svg><path d="M4 10.5 12 4l8 6.5" /><path d="M6.5 10v9h11v-9" /><path d="M10 19v-5h4v5" /></Svg>,
+  lancadas: <Svg><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4.5 8 7.5 4.2L19.5 8" /><path d="M12 12.2V21" /></Svg>,
+  alancar: <Svg><path d="M8 4h8" /><path d="M9 2h6v4H9z" /><path d="M6 5h12v16H6z" /><path d="M9 11h6" /><path d="M9 15h4" /></Svg>,
+  captacaoAdmin: <Svg><path d="M4 18V6" /><path d="M4 18h16" /><path d="M8 15v-4" /><path d="M12 15V8" /><path d="M16 15v-6" /><path d="M7 5h10" /></Svg>,
+  historico: <Svg><path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" /><path d="M12 7v5l3 2" /></Svg>,
+  relatorios: <Svg><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 16v-5" /><path d="M12 16V8" /><path d="M16 16v-7" /></Svg>,
+  backup: <Svg><path d="M7 18a4 4 0 0 1-.8-7.9A5.5 5.5 0 0 1 17 8a4.5 4.5 0 0 1 .5 9" /><path d="M12 12v8" /><path d="m9 17 3 3 3-3" /></Svg>,
+  admin: <Svg><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" /><path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.05.05a2.1 2.1 0 1 1-2.97 2.97l-.05-.05a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.08 1.65V21.3a2.1 2.1 0 0 1-4.2 0v-.08a1.8 1.8 0 0 0-1.08-1.65 1.8 1.8 0 0 0-1.98.36l-.05.05a2.1 2.1 0 1 1-2.97-2.97l.05-.05A1.8 1.8 0 0 0 4.6 15a1.8 1.8 0 0 0-1.65-1.08H2.87a2.1 2.1 0 0 1 0-4.2h.08A1.8 1.8 0 0 0 4.6 8.64a1.8 1.8 0 0 0-.36-1.98l-.05-.05a2.1 2.1 0 1 1 2.97-2.97l.05.05A1.8 1.8 0 0 0 9.2 4.05 1.8 1.8 0 0 0 10.27 2.4V2.32a2.1 2.1 0 0 1 4.2 0v.08a1.8 1.8 0 0 0 1.08 1.65 1.8 1.8 0 0 0 1.98-.36l.05-.05a2.1 2.1 0 1 1 2.97 2.97l-.05.05a1.8 1.8 0 0 0-.36 1.98 1.8 1.8 0 0 0 1.65 1.08h.08a2.1 2.1 0 0 1 0 4.2h-.08A1.8 1.8 0 0 0 19.4 15Z" /></Svg>,
 }
 
-const ABAS = [
-  { id: 'inicio',    label: 'Início',              group: 'main' },
-  { id: 'lancadas',  label: 'Estadias lançadas',    group: 'main' },
-  { id: 'alancar',   label: 'A lançar',             group: 'main' },
-  { id: 'captacao',  label: 'Captação',              group: 'main' },
-  { id: 'historico', label: 'Histórico',            group: 'extra' },
-  { id: 'backup',    label: 'Backup',               group: 'extra' },
+const OPERADOR_ABAS = [
+  { id: 'inicio', label: 'Início', group: 'main' },
+  { id: 'lancadas', label: 'Lançar estadia', group: 'main' },
+  { id: 'alancar', label: 'Colocar pendência', group: 'main' },
+]
+
+const ADMIN_ABAS = [
+  { id: 'inicio', label: 'Dashboard', group: 'main' },
+  { id: 'lancadas', label: 'Estadias lançadas', group: 'main' },
+  { id: 'alancar', label: 'A lançar', group: 'main' },
+  { id: 'captacaoAdmin', label: 'Captação Admin', group: 'extra' },
+  { id: 'historico', label: 'Histórico', group: 'extra' },
+  { id: 'relatorios', label: 'Relatórios', group: 'extra' },
+  { id: 'backup', label: 'Backup', group: 'extra' },
 ]
 
 export default function Sidebar({ onFechar }) {
   const { abaAtiva, mudarAba, estadiasALancar, cloudStatus, cloudText, usuarioAtual } = useApp()
   const isAdmin = usuarioAtual?.cargo === 'Admin'
+  const abas = isAdmin ? ADMIN_ABAS : OPERADOR_ABAS
 
-  const handleTab = (id) => { mudarAba(id); onFechar?.() }
+  const handleTab = (id) => {
+    mudarAba(id)
+    onFechar?.()
+  }
 
-  const mainAbas  = ABAS.filter(a => a.group === 'main')
-  const extraAbas = ABAS.filter(a => a.group === 'extra')
+  const mainAbas = abas.filter(a => a.group === 'main')
+  const extraAbas = abas.filter(a => a.group === 'extra')
 
   return (
     <aside className="sidebar-pro" id="sidebarPro">
       <div className="brand-pro">
-        <div style={{ width: 38, height: 38, borderRadius: 10, background: 'linear-gradient(135deg,#1d4ed8,#7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, color: 'white', flexShrink: 0 }}>VL</div>
-        <div><h1>Via Log</h1><p>Sistema de estadias</p></div>
+        <div className="brand-mark-pro" />
+        <div><h1>AYRES</h1><p>{isAdmin ? 'Logística Management' : 'Operação de estadia'}</p></div>
       </div>
 
       <nav className="sidebar-nav">
@@ -41,20 +57,22 @@ export default function Sidebar({ onFechar }) {
           <button key={a.id} className={`tab ${abaAtiva === a.id ? 'active' : ''}`} onClick={() => handleTab(a.id)}>
             <span className="tab-icon">{icons[a.id]}</span>
             <span className="tab-label">{a.label}</span>
-            {a.id === 'alancar' && estadiasALancar.length > 0 && (
-              <span className="pending-badge">{estadiasALancar.length}</span>
-            )}
+            {a.id === 'alancar' && estadiasALancar.length > 0 && <span className="pending-badge">{estadiasALancar.length}</span>}
           </button>
         ))}
 
-        <div className="sidebar-divider" />
-        <div className="sidebar-section-label">Ferramentas</div>
-        {extraAbas.map(a => (
-          <button key={a.id} className={`tab ${abaAtiva === a.id ? 'active' : ''}`} onClick={() => handleTab(a.id)}>
-            <span className="tab-icon">{icons[a.id]}</span>
-            <span className="tab-label">{a.label}</span>
-          </button>
-        ))}
+        {isAdmin && extraAbas.length > 0 && (
+          <>
+            <div className="sidebar-divider" />
+            <div className="sidebar-section-label">Admin e relatórios</div>
+            {extraAbas.map(a => (
+              <button key={a.id} className={`tab ${abaAtiva === a.id ? 'active' : ''}`} onClick={() => handleTab(a.id)}>
+                <span className="tab-icon">{icons[a.id]}</span>
+                <span className="tab-label">{a.label}</span>
+              </button>
+            ))}
+          </>
+        )}
 
         {isAdmin && (
           <>
@@ -69,20 +87,9 @@ export default function Sidebar({ onFechar }) {
       </nav>
 
       <div className="sidebar-status">
-        <div className="sidebar-card">
-          <div className="sidebar-card-title">
-            <span className={`cloud-dot ${cloudStatus === 'online' ? 'online' : cloudStatus === 'syncing' ? 'syncing' : ''}`} />
-            <span>{cloudStatus === 'online' ? 'Nuvem online' : cloudStatus === 'syncing' ? 'Sincronizando' : 'Offline'}</span>
-          </div>
-          <small>{cloudText}</small>
-        </div>
-        <div className="sidebar-user-card">
-          <div className="avatar" style={{ width: 38, height: 38, fontSize: 14, flexShrink: 0 }}>{usuarioAtual?.avatar || '?'}</div>
-          <div style={{ overflow: 'hidden' }}>
-            <div style={{ fontWeight: 900, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{usuarioAtual?.nome || 'Usuário'}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted)' }}>{usuarioAtual?.cargo || ''}</div>
-          </div>
-        </div>
+        <div className="sidebar-mini-card"><strong>{isAdmin ? 'Central administrativa' : 'Operação simplificada'}</strong><span>{isAdmin ? 'Relatórios, usuários, pendências e visão geral.' : 'Lance estadias ou envie pendências para lançamento.'}</span></div>
+        <div className="sidebar-card"><div className="sidebar-card-title"><span className={`cloud-dot ${cloudStatus === 'online' ? 'online' : cloudStatus === 'syncing' ? 'syncing' : ''}`} /><span>{cloudStatus === 'online' ? 'Nuvem online' : cloudStatus === 'syncing' ? 'Sincronizando' : 'Offline'}</span></div><small>{cloudText}</small></div>
+        <div className="sidebar-user-card"><div className="avatar" style={{ width: 40, height: 40, fontSize: 13, flexShrink: 0 }}>{usuarioAtual?.avatar || '?'}</div><div style={{ overflow: 'hidden' }}><div className="sidebar-user-name">{usuarioAtual?.nome || 'Usuário'}</div><div className="sidebar-user-role">{usuarioAtual?.cargo || ''}</div></div></div>
       </div>
     </aside>
   )

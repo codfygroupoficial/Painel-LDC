@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
-import { calcularEstadia, linkWhatsapp, dataISOTexto } from '../utils/index'
+import { calcularEstadia, linkWhatsapp, dataISOTexto, tempoDecorrido } from '../utils/index'
 import DropZone from '../components/DropZone'
-import ConfirmDialog from '../components/ConfirmDialog'
 import { nomeFilial } from '../data/filiais'
 
 const EMPTY = { chamado: '', motorista: '', telefoneMotorista: '', transportadora: '', placa: '', peso: '', prioridade: 'Normal', pagoPor: 'Logística', chegadaData: '', chegadaHora: '', saidaData: '', saidaHora: '' }
@@ -25,10 +24,18 @@ function classeStatus(s) {
   return 'status-aberto'
 }
 
+function TempoInfo({ label, data, compacto = false }) {
+  return (
+    <div className={`tempo-info ${compacto ? 'tempo-compacto' : ''}`}>
+      <strong>{tempoDecorrido(data)}</strong>
+      <small>{label}</small>
+    </div>
+  )
+}
+
 export default function EstadiaLancada({ formRef }) {
-  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais, toast } = useApp()
+  const { estadias, adicionarLancada, editarLancada, marcarFeito, finalizar, reabrir, excluirLancada, itemParaLancar, limparItemParaLancar, uploadAnexoItem, filiais } = useApp()
   const [form, setForm] = useState(EMPTY)
-  const [confirmExcluir, setConfirmExcluir] = useState(null)
   const [editandoId, setEditandoId] = useState(null)
   const [arquivos, setArquivos] = useState([])
   const [existingAnexos, setExistingAnexos] = useState([])
@@ -84,8 +91,8 @@ export default function EstadiaLancada({ formRef }) {
   }
 
   const handleSalvar = async () => {
-    if (!calc) { toast('Preencha peso, chegada e saída corretamente.', 'err'); return }
-    if (!form.motorista.trim() || !form.placa.trim()) { toast('Preencha motorista e placa.', 'err'); return }
+    if (!calc) { alert('Preencha peso, chegada e saída corretamente.'); return }
+    if (!form.motorista.trim() || !form.placa.trim()) { alert('Preencha motorista e placa.'); return }
     const novosAnexos = []
     for (const file of arquivos.slice(0, 2)) {
       const up = await uploadAnexoItem(file)
@@ -114,7 +121,6 @@ export default function EstadiaLancada({ formRef }) {
   })
 
   return (
-    <>
     <section className="aba active" id="abaLancadas">
       <div className="box" ref={formRef}>
         <div className="box-title">
@@ -126,116 +132,40 @@ export default function EstadiaLancada({ formRef }) {
           {[
             ['chamado', 'Número do chamado', 'Ex: 16820752'],
             ['motorista', 'Motorista', 'Nome do motorista'],
-          ].map(([k, lbl, ph]) => (
-            <div key={k} className="field">
-              <label>{lbl}</label>
-              <input value={form[k]} onChange={e => set(k, e.target.value)} placeholder={ph} />
-            </div>
-          ))}
-
-          <div className="field">
-            <label>WhatsApp do motorista</label>
-            <input value={form.telefoneMotorista} onChange={e => set('telefoneMotorista', e.target.value.replace(/[^0-9]/g, ''))} placeholder="64999999999" />
-          </div>
-
-          <div className="field">
-            <label>Transportadora</label>
-            <input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: Via Log" />
-          </div>
-
-          <div className="field">
-            <label>Placa</label>
-            <input value={form.placa} onChange={e => set('placa', e.target.value.toUpperCase())} placeholder="JBU0H16" />
-          </div>
-
-          <div className="field">
-            <label>Peso</label>
-            <input value={form.peso} onChange={e => set('peso', e.target.value)} placeholder="38380" />
-          </div>
-
-          <div className="field">
-            <label>Prioridade</label>
-            <select value={form.prioridade} onChange={e => set('prioridade', e.target.value)}>
-              <option>Normal</option><option>Média</option><option>Urgente</option>
-            </select>
-          </div>
-
-          <div className="field">
-            <label>Pago por</label>
-            <select value={form.pagoPor} onChange={e => set('pagoPor', e.target.value)}>
-              <option>Logística</option><option>Transportes</option>
-            </select>
-          </div>
-
-          <div className="field">
-            <label>Data chegada</label>
-            <input type="date" value={form.chegadaData} onChange={e => set('chegadaData', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Hora chegada</label>
-            <input type="time" value={form.chegadaHora} onChange={e => set('chegadaHora', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Data saída</label>
-            <input type="date" value={form.saidaData} onChange={e => set('saidaData', e.target.value)} />
-          </div>
-          <div className="field">
-            <label>Hora saída</label>
-            <input type="time" value={form.saidaHora} onChange={e => set('saidaHora', e.target.value)} />
-          </div>
+          ].map(([k, lbl, ph]) => <div key={k} className="field"><label>{lbl}</label><input value={form[k]} onChange={e => set(k, e.target.value)} placeholder={ph} /></div>)}
+          <div className="field"><label>WhatsApp do motorista</label><input value={form.telefoneMotorista} onChange={e => set('telefoneMotorista', e.target.value.replace(/[^0-9]/g, ''))} placeholder="64999999999" /></div>
+          <div className="field"><label>Transportadora</label><input value={form.transportadora} onChange={e => set('transportadora', e.target.value)} placeholder="Ex: Via Log" /></div>
+          <div className="field"><label>Placa</label><input value={form.placa} onChange={e => set('placa', e.target.value.toUpperCase())} placeholder="JBU0H16" /></div>
+          <div className="field"><label>Peso</label><input value={form.peso} onChange={e => set('peso', e.target.value)} placeholder="38380" /></div>
+          <div className="field"><label>Prioridade</label><select value={form.prioridade} onChange={e => set('prioridade', e.target.value)}><option>Normal</option><option>Média</option><option>Urgente</option></select></div>
+          <div className="field"><label>Pago por</label><select value={form.pagoPor} onChange={e => set('pagoPor', e.target.value)}><option>Logística</option><option>Transportes</option></select></div>
+          <div className="field"><label>Data chegada</label><input type="date" value={form.chegadaData} onChange={e => set('chegadaData', e.target.value)} /></div>
+          <div className="field"><label>Hora chegada</label><input type="time" value={form.chegadaHora} onChange={e => set('chegadaHora', e.target.value)} /></div>
+          <div className="field"><label>Data saída</label><input type="date" value={form.saidaData} onChange={e => set('saidaData', e.target.value)} /></div>
+          <div className="field"><label>Hora saída</label><input type="time" value={form.saidaHora} onChange={e => set('saidaHora', e.target.value)} /></div>
 
           <DropZone arquivos={arquivos} onChange={setArquivos} />
 
-          {existingAnexos.length > 0 && (
-            <div className="field wide">
-              <label>Anexos existentes</label>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {existingAnexos.map((a, i) => (
-                  <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">
-                    📄 {a.nome || `Arquivo ${i + 1}`}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
+          {existingAnexos.length > 0 && <div className="field wide"><label>Anexos existentes</label><div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>{existingAnexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">📄 {a.nome || `Arquivo ${i + 1}`}</a>)}</div></div>}
         </div>
 
         <div className="calc-preview">
-          <div className="preview-card">
-            <span>Horas válidas</span>
-            <strong>{calc ? `${parseFloat(calc.horas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} h` : '0,00 h'}</strong>
-          </div>
-          <div className="preview-card">
-            <span>Valor automático</span>
-            <strong>{calc?.valor || 'R$ 0,00'}</strong>
-          </div>
+          <div className="preview-card"><span>Horas válidas</span><strong>{calc ? `${parseFloat(calc.horas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} h` : '0,00 h'}</strong></div>
+          <div className="preview-card"><span>Valor automático</span><strong>{calc?.valor || 'R$ 0,00'}</strong></div>
         </div>
 
         <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn-green btn-full" onClick={handleSalvar}>
-            {editandoId ? 'Salvar alterações' : 'Salvar estadia lançada'}
-          </button>
-          {editandoId && (
-            <button className="btn-light" onClick={handleCancelarEdicao}>Cancelar</button>
-          )}
+          <button className="btn-green btn-full" onClick={handleSalvar}>{editandoId ? 'Salvar alterações' : 'Salvar estadia lançada'}</button>
+          {editandoId && <button className="btn-light" onClick={handleCancelarEdicao}>Cancelar</button>}
         </div>
       </div>
 
       <div className="box">
-        <div className="box-title">
-          <h2>Consultar estadias lançadas</h2>
-          <button className="btn-light btn-small" onClick={() => { setBusca(''); setFiltroStatus(''); setFiltroFilial(''); setDataInicio(''); setDataFim('') }}>Limpar filtros</button>
-        </div>
+        <div className="box-title"><h2>Consultar estadias lançadas</h2><button className="btn-light btn-small" onClick={() => { setBusca(''); setFiltroStatus(''); setFiltroFilial(''); setDataInicio(''); setDataFim('') }}>Limpar filtros</button></div>
         <div className="filters">
           <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Pesquisar placa, motorista, chamado..." />
-          <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}>
-            <option value="">Todos status</option>
-            <option>Aberto</option><option>Feito</option><option>Finalizado</option>
-          </select>
-          <select value={filtroFilial} onChange={e => setFiltroFilial(e.target.value)}>
-            <option value="">Todas as filiais</option>
-            {filiais.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-          </select>
+          <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)}><option value="">Todos status</option><option>Aberto</option><option>Feito</option><option>Finalizado</option></select>
+          <select value={filtroFilial} onChange={e => setFiltroFilial(e.target.value)}><option value="">Todas as filiais</option>{filiais.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}</select>
           <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} />
           <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} />
         </div>
@@ -244,49 +174,27 @@ export default function EstadiaLancada({ formRef }) {
       <div className="table-wrap">
         <div className="table-scroll">
           <table>
-            <thead>
-              <tr>
-                <th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Placa</th>
-                <th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th>
-                <th>Prioridade</th><th>Filial</th><th>Anexos</th><th>Lançado por</th><th>Status</th><th>Ações</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Chamado</th><th>Motorista</th><th>Transportadora</th><th>Placa</th><th>Peso</th><th>Horas</th><th>Valor</th><th>Pago por</th><th>Prioridade</th><th>Filial</th><th>Anexos</th><th>Lançado por</th><th>Lançada há</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody>
               {lista.length === 0
-                ? <tr><td colSpan={14} className="empty">Nenhuma estadia encontrada.</td></tr>
+                ? <tr><td colSpan={15} className="empty">Nenhuma estadia encontrada.</td></tr>
                 : lista.map(e => (
                   <tr key={e.id}>
                     <td><strong>{e.chamado || '-'}</strong><br /><small>{e.dataLancamento || ''}</small></td>
                     <td>{e.motorista || '-'}<br /><small>Chegada: {e.chegada || '-'}<br />Saída: {e.saida || '-'}</small></td>
                     <td>{e.transportadora || '-'}</td>
-                    <td><span className="plate">{e.placa || '-'}</span></td>
+                    <td><span className="plate">{e.placa || '-'}</span><br /><TempoInfo label="lançada há" data={e.dataLancamento} compacto /></td>
                     <td>{e.peso || '-'}</td>
                     <td><strong>{e.horas || '0.00'} h</strong></td>
                     <td><strong>{e.valor || 'R$ 0,00'}</strong></td>
                     <td>{badgePago(e.pagoPor)}</td>
                     <td><span className={`prio ${classePrio(e.prioridade)}`}>{e.prioridade || 'Normal'}</span></td>
                     <td><span className="badge badge-logistica">{nomeFilial(e.filial)}</span></td>
-                    <td>
-                      {e.anexos?.length
-                        ? e.anexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">📄 {a.nome || `Arquivo ${i + 1}`}</a>)
-                        : '-'}
-                    </td>
+                    <td>{e.anexos?.length ? e.anexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">📄 {a.nome || `Arquivo ${i + 1}`}</a>) : '-'}</td>
                     <td>{e.lancadoPor || '-'}</td>
-                    <td>
-                      <span className={`status ${classeStatus(e.status)}`}>{e.status}</span>
-                      {e.feitoPor && <><br /><small>Feito por {e.feitoPor}</small></>}
-                      {e.finalizadoPor && <><br /><small>Finalizado por {e.finalizadoPor}</small></>}
-                    </td>
-                    <td>
-                      <div className="actions">
-                        {e.status === 'Aberto' && <button className="btn-green btn-small" onClick={() => marcarFeito(e.id)}>Feito</button>}
-                        {e.status === 'Feito' && <button className="btn-purple btn-small" onClick={() => finalizar(e.id)}>Finalizar</button>}
-                        {e.status !== 'Aberto' && <button className="btn-orange btn-small" onClick={() => reabrir(e.id)}>Reabrir</button>}
-                        <button className="btn-light btn-small" onClick={() => handleEditar(e)}>Editar</button>
-                        {e.telefoneMotorista && <a className="btn btn-green btn-small" href={linkWhatsapp(e)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}
-                        <button className="btn-red btn-small" onClick={() => setConfirmExcluir(e.id)}>Excluir</button>
-                      </div>
-                    </td>
+                    <td><TempoInfo label="desde o lançamento" data={e.dataLancamento} /></td>
+                    <td><span className={`status ${classeStatus(e.status)}`}>{e.status}</span>{e.feitoPor && <><br /><small>Feito por {e.feitoPor}</small></>}{e.finalizadoPor && <><br /><small>Finalizado por {e.finalizadoPor}</small></>}</td>
+                    <td><div className="actions">{e.status === 'Aberto' && <button className="btn-green btn-small" onClick={() => marcarFeito(e.id)}>Feito</button>}{e.status === 'Feito' && <button className="btn-purple btn-small" onClick={() => finalizar(e.id)}>Finalizar</button>}{e.status !== 'Aberto' && <button className="btn-orange btn-small" onClick={() => reabrir(e.id)}>Reabrir</button>}<button className="btn-light btn-small" onClick={() => handleEditar(e)}>Editar</button>{e.telefoneMotorista && <a className="btn btn-green btn-small" href={linkWhatsapp(e)} target="_blank" rel="noopener noreferrer">WhatsApp</a>}<button className="btn-red btn-small" onClick={() => confirm('Excluir esta estadia?') && excluirLancada(e.id)}>Excluir</button></div></td>
                   </tr>
                 ))}
             </tbody>
@@ -294,14 +202,5 @@ export default function EstadiaLancada({ formRef }) {
         </div>
       </div>
     </section>
-
-    {confirmExcluir && (
-      <ConfirmDialog
-        message="Excluir esta estadia permanentemente?"
-        onConfirm={() => { excluirLancada(confirmExcluir); setConfirmExcluir(null) }}
-        onCancel={() => setConfirmExcluir(null)}
-      />
-    )}
-    </>
   )
 }

@@ -21,12 +21,7 @@ body {
               radial-gradient(ellipse at 100% 0%,rgba(124,58,237,.10),transparent 50%),
               linear-gradient(180deg,#f8fafc 0%,#eef2f7 100%);
 }
-.dark body {
-  background: radial-gradient(ellipse at 0% 0%,rgba(37,99,235,.18),transparent 50%),
-              radial-gradient(ellipse at 100% 0%,rgba(124,58,237,.14),transparent 50%),
-              linear-gradient(180deg,#020617 0%,#0a0f1e 100%);
-}
-html.dark body {
+.dark body, body:is(.dark *) {
   background: radial-gradient(ellipse at 0% 0%,rgba(37,99,235,.18),transparent 50%),
               radial-gradient(ellipse at 100% 0%,rgba(124,58,237,.14),transparent 50%),
               linear-gradient(180deg,#020617 0%,#0a0f1e 100%);
@@ -103,7 +98,6 @@ small, .muted { color:var(--muted); }
 /* ─── App Layout ───────────────────────────────────────── */
 .app { min-height:100vh; }
 .app-layout { display:grid; grid-template-columns:268px 1fr; min-height:100vh; }
-.main-pro { min-width:0; overflow-x:hidden; }
 
 /* ─── Sidebar ──────────────────────────────────────────── */
 .sidebar-pro {

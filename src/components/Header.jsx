@@ -5,7 +5,7 @@ import ConfigModal from './modals/ConfigModal'
 import CommandPalette from './modals/CommandPalette'
 
 export default function Header({ onMenuMobile }) {
-  const { cloudStatus, cloudText, usuarioAtual, estadiasALancar, alternarSom, somAtivo, alternarTema, tema, logout, conectarSupabase } = useApp()
+  const { cloudStatus, cloudText, usuarioAtual, estadiasALancar, alternarTema, tema, logout, conectarSupabase } = useApp()
   const [showConfig, setShowConfig] = useState(false)
   const [showCommand, setShowCommand] = useState(false)
 
@@ -20,7 +20,7 @@ export default function Header({ onMenuMobile }) {
               </svg>
             </button>
             <div>
-              <h1>Painel Via Log</h1>
+              <h1>AYRES</h1>
               <p>Estadias, pendências e nuvem em tempo real</p>
             </div>
           </div>
@@ -36,12 +36,10 @@ export default function Header({ onMenuMobile }) {
 
             <NotificationBell />
 
-            <button className={`btn-light sound-toggle ${somAtivo ? 'on' : ''}`} onClick={alternarSom} title={somAtivo ? 'Desativar som' : 'Ativar som'}>
-              {somAtivo ? (
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M12 6v12m0-12L8 9H5a1 1 0 00-1 1v4a1 1 0 001 1h3l4 3V6z" /></svg>
-              ) : (
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" /></svg>
-              )}
+            <button className="btn-light sound-toggle on" title="Som premium sempre ativo" data-sound="off">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 6v12m0-12L8 9H5a1 1 0 00-1 1v4a1 1 0 001 1h3l4 3V6z" />
+              </svg>
             </button>
 
             <button className="btn-light" onClick={() => setShowConfig(true)} title="Configurações">

@@ -1,7 +1,16 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import DropZone from '../components/DropZone'
-import ConfirmDialog from '../components/ConfirmDialog'
+import { nomeFilial } from '../data/filiais'
+import { tempoDecorrido, slaPendencia } from '../utils/index'
+
+const criarFormVazio = (filial = 'jatai-go') => ({
+  filial,
+  placa: '',
+  transportadora: '',
+  prioridade: 'Normal',
+  obs: '',
+})
 
 function classePrio(p) {
   if (p === 'Urgente') return 'prio-urgente'
@@ -9,31 +18,69 @@ function classePrio(p) {
   return 'prio-normal'
 }
 
+function TempoPendente({ data, compacto = false }) {
+  const sla = slaPendencia(data)
+  return (
+    <div className={`tempo-info tempo-pendente tempo-${sla.nivel} ${compacto ? 'tempo-compacto' : ''}`}>
+      <strong>{tempoDecorrido(data)}</strong>
+      <small>{sla.label} · {compacto ? 'pendente' : sla.descricao}</small>
+    </div>
+  )
+}
+
+function SlaBadge({ data }) {
+  const sla = slaPendencia(data)
+  return <span className={`sla-badge sla-${sla.nivel}`}>{sla.label}</span>
+}
+
 export default function EstadiaALancar({ formRef }) {
-  const { estadiasALancar, adicionarALancar, abrirParaLancar, excluirALancar, toast } = useApp()
-  const [form, setForm] = useState({ placa: '', transportadora: '', prioridade: 'Normal', obs: '' })
+  const { estadiasALancar, adicionarALancar, abrirParaLancar, excluirALancar, filiais, usuarioAtual } = useApp()
+  const filialPadrao = usuarioAtual?.filial || 'jatai-go'
+  const [form, setForm] = useState(criarFormVazio(filialPadrao))
   const [arquivos, setArquivos] = useState([])
-  const [confirmExcluir, setConfirmExcluir] = useState(null)
+  const isAdmin = usuarioAtual?.cargo === 'Admin'
+
+  const listaBase = isAdmin
+    ? estadiasALancar
+    : estadiasALancar.filter(e => (e.filial || 'principal') === filialPadrao)
+
+  const lista = [...listaBase].sort((a, b) => slaPendencia(b.dataCriacao).ordem - slaPendencia(a.dataCriacao).ordem)
+  const criticas = lista.filter(e => slaPendencia(e.dataCriacao).nivel === 'critico').length
+  const urgentes = lista.filter(e => slaPendencia(e.dataCriacao).nivel === 'urgente').length
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }))
 
   const handleSalvar = async () => {
-    if (!form.placa.trim()) { toast('Preencha a placa.', 'err'); return }
+    if (!form.filial) { alert('Escolha a filial que vai lançar.'); return }
+    if (!form.placa.trim()) { alert('Preencha a placa.'); return }
     await adicionarALancar(form, arquivos)
-    setForm({ placa: '', transportadora: '', prioridade: 'Normal', obs: '' })
+    setForm(criarFormVazio(filialPadrao))
     setArquivos([])
   }
 
   return (
-    <>
     <section className="aba active" id="abaALancar">
+      {(criticas > 0 || urgentes > 0) && (
+        <div className={`sla-alert ${criticas > 0 ? 'critico' : 'urgente'}`}>
+          <strong>{criticas > 0 ? 'Atenção crítica' : 'Atenção operacional'}</strong>
+          <span>{criticas} crítica(s) e {urgentes} urgente(s) aguardando tratamento. As mais antigas ficam no topo.</span>
+        </div>
+      )}
+
       <div className="box" ref={formRef}>
         <div className="box-title">
           <h2>Adicionar estadia a lançar</h2>
-          <span>Arraste até 2 documentos para anexar na pendência.</span>
+          <span>Escolha a filial. A pendência aparece para quem for daquela filial lançar.</span>
         </div>
 
         <div className="form-grid">
+          <div className="field">
+            <label>Filial que vai lançar</label>
+            <select value={form.filial} onChange={e => set('filial', e.target.value)}>
+              {filiais.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            </select>
+          </div>
+
           <div className="field">
             <label>Placa</label>
             <input value={form.placa} onChange={e => set('placa', e.target.value.toUpperCase())} placeholder="JBU0H16" />
@@ -59,7 +106,7 @@ export default function EstadiaALancar({ formRef }) {
           <DropZone arquivos={arquivos} onChange={setArquivos} />
         </div>
 
-        <button className="btn-purple btn-full" onClick={handleSalvar}>Salvar em estadias a lançar</button>
+        <button className="btn-purple btn-full" onClick={handleSalvar}>Enviar para filial lançar</button>
       </div>
 
       <div className="table-wrap">
@@ -67,47 +114,35 @@ export default function EstadiaALancar({ formRef }) {
           <table>
             <thead>
               <tr>
-                <th>Placa</th><th>Transportadora</th><th>Prioridade</th>
-                <th>Anexo</th><th>Observação</th><th>Criado por</th><th>Status</th><th>Ações</th>
+                <th>Filial</th><th>Placa</th><th>SLA</th><th>Transportadora</th><th>Prioridade</th>
+                <th>Anexo</th><th>Observação</th><th>Criado por</th><th>Pendente há</th><th>Status</th><th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              {estadiasALancar.length === 0
-                ? <tr><td colSpan={8} className="empty">Nenhuma estadia a lançar.</td></tr>
-                : estadiasALancar.map(e => (
-                  <tr key={e.id}>
-                    <td><span className="plate">{e.placa || '-'}</span></td>
-                    <td>{e.transportadora || '-'}</td>
-                    <td><span className={`prio ${classePrio(e.prioridade)}`}>{e.prioridade || 'Normal'}</span></td>
-                    <td>
-                      {e.anexos?.length
-                        ? e.anexos.filter(a => a?.url).map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">Arquivo {i + 1}</a>)
-                        : '-'}
-                    </td>
-                    <td>{e.obs || '-'}</td>
-                    <td>{e.criadoPor || '-'}<br /><small>{e.dataCriacao || ''}</small></td>
-                    <td><span className="status status-lancar">A lançar</span></td>
-                    <td>
-                      <div className="actions">
-                        <button className="btn-green btn-small" onClick={() => abrirParaLancar(e.id)}>Lançar</button>
-                        <button className="btn-red btn-small" onClick={() => setConfirmExcluir(e.id)}>Excluir</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              {lista.length === 0
+                ? <tr><td colSpan={11} className="empty">Nenhuma estadia a lançar para sua filial.</td></tr>
+                : lista.map(e => {
+                  const sla = slaPendencia(e.dataCriacao)
+                  return (
+                    <tr key={e.id} className={`sla-row sla-row-${sla.nivel}`}>
+                      <td><span className="badge badge-logistica">{nomeFilial(e.filial)}</span></td>
+                      <td><span className="plate">{e.placa || '-'}</span><br /><TempoPendente data={e.dataCriacao} compacto /></td>
+                      <td><SlaBadge data={e.dataCriacao} /></td>
+                      <td>{e.transportadora || '-'}</td>
+                      <td><span className={`prio ${classePrio(e.prioridade)}`}>{e.prioridade || 'Normal'}</span></td>
+                      <td>{e.anexos?.length ? e.anexos.map((a, i) => <a key={i} className="anexo-link" href={a.url} target="_blank" rel="noopener noreferrer">Arquivo {i + 1}</a>) : '-'}</td>
+                      <td>{e.obs || '-'}</td>
+                      <td>{e.criadoPor || '-'}<br /><small>{e.dataCriacao || ''}</small></td>
+                      <td><TempoPendente data={e.dataCriacao} /></td>
+                      <td><span className="status status-lancar">A lançar</span></td>
+                      <td><div className="actions"><button className="btn-green btn-small" onClick={() => abrirParaLancar(e.id)}>Lançar</button><button className="btn-red btn-small" onClick={() => confirm('Excluir esta pendência?') && excluirALancar(e.id)}>Excluir</button></div></td>
+                    </tr>
+                  )
+                })}
             </tbody>
           </table>
         </div>
       </div>
     </section>
-
-    {confirmExcluir && (
-      <ConfirmDialog
-        message="Excluir esta pendência?"
-        onConfirm={() => { excluirALancar(confirmExcluir); setConfirmExcluir(null) }}
-        onCancel={() => setConfirmExcluir(null)}
-      />
-    )}
-    </>
   )
 }

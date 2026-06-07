@@ -1,0 +1,179 @@
+/* Login mobile premium — sem mexer na lógica */
+
+.login-input {
+  min-height: 52px !important;
+  font-size: 15px !important;
+  border-radius: 16px !important;
+}
+
+.mod-card {
+  position: relative;
+  overflow: hidden;
+  color: #fff !important;
+}
+
+.mod-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.08), transparent 48%);
+  opacity: 0;
+  transition: .22s ease;
+  pointer-events: none;
+}
+
+.mod-card.active::after,
+.mod-card:hover::after {
+  opacity: 1;
+}
+
+.login-btn {
+  min-height: 54px !important;
+  background: linear-gradient(135deg, #2563eb, #16a34a) !important;
+  box-shadow: 0 16px 34px rgba(37,99,235,.22) !important;
+}
+
+@media (max-width: 860px) {
+  /* Tela inteira do login */
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] {
+    background:
+      radial-gradient(circle at 18% 4%, rgba(34,197,94,.24), transparent 28%),
+      radial-gradient(circle at 85% 18%, rgba(37,99,235,.32), transparent 32%),
+      linear-gradient(145deg,#020617 0%,#0f172a 48%,#111827 100%) !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"]::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(to bottom, black, transparent 76%);
+  }
+
+  /* Grid principal do login */
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+    align-items: start !important;
+    padding: 18px 13px 28px !important;
+    min-height: auto !important;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Bloco de texto */
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:first-child {
+    max-width: none !important;
+    padding: 4px 2px 0 !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] h1 {
+    font-size: clamp(35px, 11vw, 52px) !important;
+    letter-spacing: -2px !important;
+    line-height: .98 !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] h1 br {
+    display: block;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] p {
+    font-size: 14px !important;
+    line-height: 1.48 !important;
+    margin-top: 14px !important;
+    margin-bottom: 18px !important;
+  }
+
+  /* Cards de explicação: no celular ficam menores */
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:first-child > div[style*="repeat"] {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 9px !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:first-child > div[style*="repeat"] > div {
+    padding: 13px !important;
+    border-radius: 16px !important;
+    background: rgba(255,255,255,.06) !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:first-child > div[style*="repeat"] > div p {
+    font-size: 11.5px !important;
+    margin: 6px 0 0 !important;
+  }
+
+  /* Card do formulário */
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:nth-child(2) {
+    border-radius: 24px !important;
+    padding: 19px !important;
+    background: rgba(2,6,23,.84) !important;
+    box-shadow: 0 28px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08) !important;
+    backdrop-filter: blur(24px) !important;
+  }
+
+  .mod-card {
+    padding: 13px !important;
+    border-radius: 16px !important;
+    gap: 10px !important;
+    min-height: 76px;
+  }
+
+  .mod-card > span:first-child {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: rgba(255,255,255,.08);
+    font-size: 22px !important;
+  }
+
+  .mod-card strong {
+    font-size: 14px !important;
+  }
+
+  .mod-card small {
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .login-input {
+    min-height: 50px !important;
+    padding-top: 13px !important;
+    padding-bottom: 13px !important;
+    background: rgba(255,255,255,.075) !important;
+  }
+
+  .login-btn {
+    min-height: 52px !important;
+    border-radius: 15px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] {
+    padding: 14px 10px 24px !important;
+    gap: 14px !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] h1 {
+    font-size: 34px !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:first-child > div[style*="repeat"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  #root > div[style*="position: fixed"][style*="min-height: 100vh"] > div[style*="grid-template-columns"] > div:nth-child(2) {
+    padding: 16px !important;
+    border-radius: 21px !important;
+  }
+
+  .mod-card {
+    min-height: 72px;
+  }
+}

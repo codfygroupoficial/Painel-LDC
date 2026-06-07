@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
-const URL = import.meta.env.VITE_SUPABASE_URL || 'https://qzjwjylpbmnggczrbgoe.supabase.co'
-const KEY = import.meta.env.VITE_SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6andqeWxwYm1uZ2djenJiZ29lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODc3MzEsImV4cCI6MjA5NDI2MzczMX0.YdRUHObnqW4ru1iWzp79NgQvvZCm26xSFnbh7AlJ4lE'
+const URL = import.meta.env.VITE_SUPABASE_URL || 'https://dwyaedcrfgtnzkkflmge.supabase.co'
+const KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_ko9HUoztqY26AIzw4rxAHA_jGH005Md'
 export const TABLE = 'ldc_estadias'
 export const USUARIOS_TABLE = 'ldc_usuarios'
 export const BUCKET = 'ldc-anexos'
@@ -42,14 +42,42 @@ export const baixarTodos = async (filial = null) => {
   if (filial) query = query.eq('filial', filial)
   const { data, error } = await query
   if (error) throw error
-  return data
+  return data || []
 }
 
 export const baixarAdmin = async () => {
   const sb = getClient()
   const { data, error } = await sb.from(TABLE).select('*').order('updated_at', { ascending: false })
   if (error) throw error
-  return data
+  return data || []
+}
+
+export const carregarUsuarios = async () => {
+  const sb = getClient()
+  const { data, error } = await sb.from(USUARIOS_TABLE).select('*').order('nome', { ascending: true })
+  if (error) throw error
+  return data || []
+}
+
+export const salvarUsuario = async (usuario) => {
+  const sb = getClient()
+  const { error } = await sb.from(USUARIOS_TABLE).upsert({
+    usuario: usuario.usuario,
+    senha: usuario.senha,
+    nome: usuario.nome || usuario.usuario,
+    cargo: usuario.cargo || 'Operador',
+    avatar: usuario.avatar || '',
+    foto: usuario.foto || '',
+    filial: usuario.filial || 'principal',
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'usuario' })
+  if (error) throw error
+}
+
+export const deletarUsuario = async (usuario) => {
+  const sb = getClient()
+  const { error } = await sb.from(USUARIOS_TABLE).delete().eq('usuario', String(usuario))
+  if (error) throw error
 }
 
 export const uploadAnexo = async (file) => {
@@ -79,45 +107,32 @@ export const iniciarRealtime = (onMudanca) => {
     .subscribe()
 }
 
-export const carregarUsuarios = async () => {
+export const iniciarPresenca = (usuario, onAtivos) => {
   const sb = getClient()
-  const { data, error } = await sb.from(USUARIOS_TABLE).select('*')
-  if (error) throw error
-  return data || []
-}
-
-export const salvarUsuario = async (user) => {
-  const sb = getClient()
-  const { error } = await sb.from(USUARIOS_TABLE).upsert({
-    usuario: user.usuario,
-    senha: user.senha,
-    nome: user.nome,
-    cargo: user.cargo || 'Operador',
-    avatar: user.avatar || '',
-    foto: user.foto || '',
-    filial: user.filial || 'principal',
-  }, { onConflict: 'usuario' })
-  if (error) throw error
-}
-
-export const deletarUsuario = async (usuario) => {
-  const sb = getClient()
-  const { error } = await sb.from(USUARIOS_TABLE).delete().eq('usuario', usuario)
-  if (error) throw error
-}
-
-export const iniciarPresenca = (usuario, onUpdate) => {
-  const sb = getClient()
-  const canal = sb.channel('presenca-online', {
-    config: { presence: { key: usuario.usuario } },
+  const channel = sb.channel('via-log-presenca', {
+    config: { presence: { key: usuario?.usuario || crypto.randomUUID() } },
   })
-  canal
+
+  channel
     .on('presence', { event: 'sync' }, () => {
-      const ativos = Object.values(canal.presenceState()).flat()
-      onUpdate(ativos)
+      const state = channel.presenceState()
+      const ativos = Object.values(state).flat().map(p => p.usuario).filter(Boolean)
+      onAtivos?.(ativos)
     })
     .subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') await canal.track({ ...usuario, t: Date.now() })
+      if (status === 'SUBSCRIBED') {
+        await channel.track({
+          usuario: {
+            usuario: usuario?.usuario || '-',
+            nome: usuario?.nome || usuario?.usuario || 'Usuário',
+            cargo: usuario?.cargo || '',
+            avatar: usuario?.avatar || '',
+            filial: usuario?.filial || '',
+          },
+          online_at: new Date().toISOString(),
+        })
+      }
     })
-  return canal
+
+  return channel
 }

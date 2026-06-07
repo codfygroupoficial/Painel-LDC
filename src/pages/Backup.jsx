@@ -7,13 +7,13 @@ export default function Backup() {
 
   const handleImportar = () => {
     const file = inputRef.current?.files?.[0]
-    if (!file) { toast('Selecione um arquivo JSON.', 'err'); return }
+    if (!file) { alert('Selecione um arquivo JSON.'); return }
     const reader = new FileReader()
     reader.onload = () => {
       try {
         const dados = JSON.parse(reader.result)
         importarBackup(dados)
-      } catch { toast('Arquivo JSON inválido.', 'err') }
+      } catch { alert('Arquivo inválido.') }
     }
     reader.readAsText(file)
   }

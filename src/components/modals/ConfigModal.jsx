@@ -1,7 +1,7 @@
 import { useApp } from '../../context/AppContext'
 
 export default function ConfigModal({ show, onClose }) {
-  const { alternarSom, alternarTema, conectarSupabase, sincronizarFila, logout, usuarioAtual } = useApp()
+  const { alternarTema, conectarSupabase, sincronizarFila, logout, usuarioAtual } = useApp()
 
   if (!show) return null
 
@@ -18,9 +18,9 @@ export default function ConfigModal({ show, onClose }) {
 
         <div className="config-grid">
           <div className="config-item">
-            <strong>🔔 Sons</strong>
-            <span>Ative ou desative alertas sonoros.</span>
-            <button className="btn-light btn-small" onClick={alternarSom}>Alternar som</button>
+            <strong>🔔 Sons premium</strong>
+            <span>Os sons ficam sempre ativos e ajudam a perceber cliques, salvamentos, erros e sincronização.</span>
+            <button className="btn-light btn-small" disabled>Sempre ativo</button>
           </div>
 
           <div className="config-item">
