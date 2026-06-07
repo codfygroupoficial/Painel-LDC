@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect, useRef, useCallback } from 'react'
-import { defaultUsers } from '../data/defaultUsers'
+import { defaultUsers, ADMIN_USERNAME } from '../data/defaultUsers'
 import { FILIAIS } from '../data/filiais'
 import { gerarId, baixarArquivo, dataISOTexto, calcularEstadia } from '../utils/index'
 import * as sb from '../lib/supabase'
@@ -307,7 +307,7 @@ export function AppProvider({ children }) {
 
   const verificarSenhaAdmin = useCallback(async (senha) => {
     const usuarios = JSON.parse(localStorage.getItem('usuariosPainelViaLog') || 'null') || stateRef.current.usuarios
-    const admin = usuarios.find(u => u.usuario === 'admin')
+    const admin = usuarios.find(u => u.usuario === ADMIN_USERNAME)
     if (!admin) return false
     const senhaH = await hashSenha(senha)
     return isHash(admin.senha) ? admin.senha === senhaH : admin.senha === senha
@@ -343,7 +343,7 @@ export function AppProvider({ children }) {
   }, [toast])
 
   const excluirUsuario = useCallback(async (login) => {
-    if (login === 'admin') return
+    if (login === ADMIN_USERNAME) return
     dispatch({ type: 'SET_USUARIOS', payload: stateRef.current.usuarios.filter(u => u.usuario !== login) })
     try { await sb.deletarUsuario(login) } catch {}
     toast('Usuário excluído.', 'ok')

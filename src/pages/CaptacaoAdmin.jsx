@@ -4,6 +4,7 @@ import * as v2 from '../lib/supabaseV2'
 import { baixarArquivo } from '../utils/index'
 import { nomeFilial } from '../data/filiais'
 import '../captacao-admin.css'
+import { ADMIN_USERNAME } from '../data/defaultUsers'
 
 const STATUS_LABEL = {
   contatado: 'Contatado',
@@ -102,7 +103,7 @@ export default function CaptacaoAdmin() {
       const rows = await legacy.baixarTodos()
       const itens = rows.filter(r => r.tipo === 'captacao').map(normalizarLegado)
       for (const item of itens) {
-        await v2.salvarCaptacaoV2(item, { usuario: item.captador || 'admin', nome: item.nomeCaptador || item.captador || 'Admin', cargo: 'Admin', filial: item.filial || 'jatai-go' })
+        await v2.salvarCaptacaoV2(item, { usuario: item.captador || ADMIN_USERNAME, nome: item.nomeCaptador || item.captador || 'Admin', cargo: 'Admin', filial: item.filial || 'jatai-go' })
       }
       await carregar()
       alert(`Migração concluída: ${itens.length} captação(ões) enviadas para vl_captacoes.`)
