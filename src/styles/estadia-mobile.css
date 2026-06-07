@@ -1,0 +1,338 @@
+/* Estadia mobile — tabelas viram cards e formulários ficam mais confortáveis */
+
+@media (max-width: 860px) {
+  #abaLancadas,
+  #abaALancar {
+    display: grid;
+    gap: 14px;
+  }
+
+  #abaLancadas .box,
+  #abaALancar .box {
+    border-radius: 22px !important;
+    padding: 16px !important;
+    border: 1px solid var(--line) !important;
+    background: var(--card) !important;
+    box-shadow: 0 16px 45px rgba(15,23,42,.08) !important;
+  }
+
+  .dark #abaLancadas .box,
+  .dark #abaALancar .box {
+    background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.96)) !important;
+    border-color: rgba(148,163,184,.16) !important;
+    box-shadow: 0 18px 50px rgba(0,0,0,.24) !important;
+  }
+
+  #abaLancadas .box-title,
+  #abaALancar .box-title {
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  #abaLancadas .box-title h2,
+  #abaALancar .box-title h2 {
+    font-size: 18px !important;
+    letter-spacing: -.35px;
+  }
+
+  #abaLancadas .box-title span,
+  #abaALancar .box-title span {
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  #abaLancadas .form-grid,
+  #abaALancar .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 11px !important;
+  }
+
+  #abaLancadas .field,
+  #abaLancadas .field.wide,
+  #abaALancar .field,
+  #abaALancar .field.wide {
+    grid-column: auto !important;
+  }
+
+  #abaLancadas .field label,
+  #abaALancar .field label {
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    color: var(--muted) !important;
+    text-transform: uppercase;
+    letter-spacing: .55px;
+  }
+
+  #abaLancadas .field input,
+  #abaLancadas .field select,
+  #abaALancar .field input,
+  #abaALancar .field select {
+    min-height: 48px !important;
+    border-radius: 14px !important;
+    font-size: 15px !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--line) !important;
+  }
+
+  .dark #abaLancadas .field input,
+  .dark #abaLancadas .field select,
+  .dark #abaALancar .field input,
+  .dark #abaALancar .field select {
+    background: rgba(15,23,42,.84) !important;
+    border-color: rgba(148,163,184,.18) !important;
+  }
+
+  #abaLancadas .calc-preview {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 9px !important;
+  }
+
+  #abaLancadas .preview-card {
+    border-radius: 17px !important;
+    padding: 14px !important;
+    background: var(--bg) !important;
+    border: 1px solid var(--line) !important;
+  }
+
+  #abaLancadas .preview-card strong {
+    font-size: 20px !important;
+  }
+
+  #abaLancadas .box > div[style*="display: flex"][style*="gap: 8"] {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  #abaLancadas .box > div[style*="display: flex"][style*="gap: 8"] button,
+  #abaALancar .btn-full,
+  #abaLancadas .btn-full {
+    min-height: 48px !important;
+    border-radius: 15px !important;
+    font-size: 14px !important;
+  }
+
+  #abaLancadas .filters,
+  #abaALancar .filters {
+    grid-template-columns: 1fr !important;
+    gap: 9px !important;
+  }
+
+  #abaLancadas .filters input,
+  #abaLancadas .filters select,
+  #abaALancar .filters input,
+  #abaALancar .filters select {
+    min-height: 46px !important;
+    border-radius: 14px !important;
+  }
+
+  #abaLancadas .table-wrap,
+  #abaALancar .table-wrap {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  #abaLancadas .table-scroll,
+  #abaALancar .table-scroll {
+    overflow: visible !important;
+  }
+
+  #abaLancadas table,
+  #abaALancar table {
+    display: block !important;
+    width: 100% !important;
+    border-collapse: separate !important;
+  }
+
+  #abaLancadas thead,
+  #abaALancar thead {
+    display: none !important;
+  }
+
+  #abaLancadas tbody,
+  #abaALancar tbody {
+    display: grid !important;
+    gap: 12px !important;
+  }
+
+  #abaLancadas tr,
+  #abaALancar tr {
+    display: block !important;
+    background: var(--card) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: 22px !important;
+    padding: 14px !important;
+    box-shadow: 0 14px 42px rgba(15,23,42,.08) !important;
+    overflow: hidden !important;
+  }
+
+  .dark #abaLancadas tr,
+  .dark #abaALancar tr {
+    background: linear-gradient(180deg, rgba(15,23,42,.98), rgba(2,6,23,.96)) !important;
+    border-color: rgba(148,163,184,.16) !important;
+    box-shadow: 0 14px 42px rgba(0,0,0,.24) !important;
+  }
+
+  #abaLancadas td,
+  #abaALancar td {
+    display: grid !important;
+    grid-template-columns: 108px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    align-items: start !important;
+    width: 100% !important;
+    border: 0 !important;
+    border-bottom: 1px solid var(--line) !important;
+    padding: 10px 0 !important;
+    white-space: normal !important;
+    color: var(--text) !important;
+  }
+
+  #abaLancadas td:last-child,
+  #abaALancar td:last-child {
+    border-bottom: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  #abaLancadas td::before,
+  #abaALancar td::before {
+    content: '';
+    color: var(--muted);
+    font-size: 10.5px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: .55px;
+    line-height: 1.25;
+  }
+
+  /* Rótulos da tabela de estadias lançadas */
+  #abaLancadas td:nth-child(1)::before { content: 'Chamado'; }
+  #abaLancadas td:nth-child(2)::before { content: 'Motorista'; }
+  #abaLancadas td:nth-child(3)::before { content: 'Transportadora'; }
+  #abaLancadas td:nth-child(4)::before { content: 'Placa'; }
+  #abaLancadas td:nth-child(5)::before { content: 'Peso'; }
+  #abaLancadas td:nth-child(6)::before { content: 'Horas'; }
+  #abaLancadas td:nth-child(7)::before { content: 'Valor'; }
+  #abaLancadas td:nth-child(8)::before { content: 'Pago por'; }
+  #abaLancadas td:nth-child(9)::before { content: 'Prioridade'; }
+  #abaLancadas td:nth-child(10)::before { content: 'Filial'; }
+  #abaLancadas td:nth-child(11)::before { content: 'Anexos'; }
+  #abaLancadas td:nth-child(12)::before { content: 'Lançado por'; }
+  #abaLancadas td:nth-child(13)::before { content: 'Status'; }
+  #abaLancadas td:nth-child(14)::before { content: 'Ações'; }
+
+  /* Rótulos da tabela de estadias a lançar */
+  #abaALancar td:nth-child(1)::before { content: 'Filial'; }
+  #abaALancar td:nth-child(2)::before { content: 'Placa'; }
+  #abaALancar td:nth-child(3)::before { content: 'Transportadora'; }
+  #abaALancar td:nth-child(4)::before { content: 'Prioridade'; }
+  #abaALancar td:nth-child(5)::before { content: 'Anexo'; }
+  #abaALancar td:nth-child(6)::before { content: 'Observação'; }
+  #abaALancar td:nth-child(7)::before { content: 'Criado por'; }
+  #abaALancar td:nth-child(8)::before { content: 'Status'; }
+  #abaALancar td:nth-child(9)::before { content: 'Ações'; }
+
+  #abaLancadas td:nth-child(4),
+  #abaLancadas td:nth-child(7),
+  #abaLancadas td:nth-child(13),
+  #abaLancadas td:nth-child(14),
+  #abaALancar td:nth-child(2),
+  #abaALancar td:nth-child(8),
+  #abaALancar td:nth-child(9) {
+    align-items: center !important;
+  }
+
+  #abaLancadas .plate,
+  #abaALancar .plate {
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+    justify-self: start !important;
+  }
+
+  #abaLancadas .badge,
+  #abaLancadas .prio,
+  #abaLancadas .status,
+  #abaALancar .badge,
+  #abaALancar .prio,
+  #abaALancar .status {
+    justify-self: start !important;
+  }
+
+  #abaLancadas .anexo-link,
+  #abaALancar .anexo-link {
+    display: inline-flex !important;
+    margin: 2px 4px 2px 0 !important;
+    border-radius: 12px !important;
+    padding: 7px 9px !important;
+  }
+
+  #abaLancadas .actions,
+  #abaALancar .actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  #abaLancadas .actions button,
+  #abaLancadas .actions a,
+  #abaALancar .actions button,
+  #abaALancar .actions a {
+    width: 100% !important;
+    min-height: 41px !important;
+    border-radius: 13px !important;
+    font-size: 12px !important;
+    justify-content: center !important;
+    padding: 9px 8px !important;
+  }
+
+  #abaLancadas tr:has(.empty),
+  #abaALancar tr:has(.empty) {
+    display: table-row !important;
+    padding: 0 !important;
+  }
+
+  #abaLancadas .empty,
+  #abaALancar .empty {
+    display: table-cell !important;
+    border-bottom: 0 !important;
+    padding: 28px 12px !important;
+    text-align: center !important;
+  }
+
+  #abaLancadas .empty::before,
+  #abaALancar .empty::before {
+    display: none !important;
+  }
+}
+
+@media (max-width: 520px) {
+  #abaLancadas .box,
+  #abaALancar .box {
+    padding: 14px !important;
+    border-radius: 20px !important;
+  }
+
+  #abaLancadas .calc-preview {
+    grid-template-columns: 1fr !important;
+  }
+
+  #abaLancadas tr,
+  #abaALancar tr {
+    border-radius: 19px !important;
+    padding: 12px !important;
+  }
+
+  #abaLancadas td,
+  #abaALancar td {
+    grid-template-columns: 92px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    font-size: 13px !important;
+  }
+
+  #abaLancadas .actions,
+  #abaALancar .actions {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
