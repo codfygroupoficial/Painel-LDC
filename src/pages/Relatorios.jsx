@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { baixarArquivo, dataISOTexto, dinheiro, moedaNumero, resumirSLA } from '../utils/index'
 import { nomeFilial } from '../data/filiais'
-import '../relatorios-pro.css'
+import '../styles/relatorios-pro.css'
 
 const safe = (v, fallback = 'Não informado') => {
   const txt = String(v || '').trim()

@@ -1,8 +1,8 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import { useApp } from '../context/AppContext'
 import { dinheiro, moedaNumero } from '../utils/index'
-import '../estadia-dashboard-pro.css'
-import '../operator-simple.css'
+import '../styles/estadia-dashboard-pro.css'
+import '../styles/operator-simple.css'
 
 const STATUS_CORES = ['#2563eb', '#22c55e', '#f97316']
 const PRIO_CORES = { Urgente: '#ef4444', Média: '#f97316', Normal: '#22c55e' }
@@ -150,7 +150,7 @@ export default function Dashboard({ onNovaLancada, onNovaPendencia }) {
     { nome: 'Jataí → Santos', value: totalEstadias + 6, color: '#2563eb' },
     { nome: 'Mineiros → Santos', value: totalPendentes + 4, color: '#22c55e' },
     { nome: 'Rio Verde → Santos', value: urgentes + 3, color: '#a855f7' },
-    { nome: 'Alto Araguaia → Santos', value: abertas + 2, color: '#f97316' },
+    { nome: 'Alto Araguaía → Santos', value: abertas + 2, color: '#f97316' },
   ]
   const maxRota = Math.max(...rotas.map(r => r.value), 1)
 
