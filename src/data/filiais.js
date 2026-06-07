@@ -6,5 +6,5 @@ export const FILIAIS = [
 
 export const nomeFilial = (id) => {
   const f = FILIAIS.find(f => f.id === id)
-  return f ? (f.cidade || f.nome) : id || 'Principal'
+  return f ? (f.cidade || f.nome) : id || 'Sem filial'
 }

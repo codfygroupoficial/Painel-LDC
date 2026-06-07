@@ -31,7 +31,7 @@ function formatarTelefone(v) { const n = normalizarTelefone(v); if (n.length <= 
 function hojeISO() { return new Date().toISOString().slice(0, 10) }
 function agoraBR() { return new Date().toLocaleString('pt-BR') }
 function pct(a, b) { return b ? Math.round((a / b) * 100) : 0 }
-function statusKey(status) { const s = String(status || '').toLowerCase().trim(); if (s === 'nao_carregou' || s === 'não carregou' || s === 'nao carregou' || s.includes('não carreg') || s.includes('nao carreg')) return 'nao_carregou'; if (s === 'carregou' || s === 'carregado') return 'carregou'; if (s === 'ordem' || s.includes('ordem') || s.includes('programado') || s.includes('chegou')) return 'ordem'; return 'contatado' }
+const statusKey = v2.statusV2
 function normalizarItem(item) {
   const key = statusKey(item.status)
   return { ...item, id: item.id || gerarId(), nome: item.nome || item.motorista || '', numero: item.numero || item.telefone || '', operacao: item.operacao || item.produto || 'Farelo', status: key, obs: item.obs || item.observacao || item.ultimaObs || '', motivoNaoCarregou: item.motivoNaoCarregou || item.motivo_nao_carregou || '', justificativaNaoCarregou: item.justificativaNaoCarregou || item.justificativa_nao_carregou || '', quantidadeCargas: String(item.quantidadeCargas || item.quantidade_cargas || 1), captador: item.captador || item.usuario || '-', nomeCaptador: item.nomeCaptador || item.nomeUsuario || item.usuario || '-', filial: item.filial || 'jatai-go', data: item.data || agoraBR(), dataISO: item.dataISO || hojeISO() }

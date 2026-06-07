@@ -13,7 +13,7 @@ export const getClient = () => {
   return client
 }
 
-export const payload = (item, tipo, filial = 'principal') => ({
+export const payload = (item, tipo, filial = 'jatai-go') => ({
   local_id: String(item.id),
   tipo,
   filial,
@@ -24,7 +24,7 @@ export const payload = (item, tipo, filial = 'principal') => ({
   updated_at: new Date().toISOString(),
 })
 
-export const salvar = async (item, tipo, filial = 'principal') => {
+export const salvar = async (item, tipo, filial = 'jatai-go') => {
   const sb = getClient()
   const { error } = await sb.from(TABLE).upsert(payload(item, tipo, filial), { onConflict: 'local_id' })
   if (error) throw error
@@ -68,7 +68,7 @@ export const salvarUsuario = async (usuario) => {
     cargo: usuario.cargo || 'Operador',
     avatar: usuario.avatar || '',
     foto: usuario.foto || '',
-    filial: usuario.filial || 'principal',
+    filial: usuario.filial || 'jatai-go',
     updated_at: new Date().toISOString(),
   }, { onConflict: 'usuario' })
   if (error) throw error

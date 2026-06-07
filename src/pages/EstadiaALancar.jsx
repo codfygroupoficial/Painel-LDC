@@ -42,7 +42,7 @@ export default function EstadiaALancar({ formRef }) {
 
   const listaBase = isAdmin
     ? estadiasALancar
-    : estadiasALancar.filter(e => (e.filial || 'principal') === filialPadrao)
+    : estadiasALancar.filter(e => (e.filial || 'jatai-go') === filialPadrao)
 
   const lista = [...listaBase].sort((a, b) => slaPendencia(b.dataCriacao).ordem - slaPendencia(a.dataCriacao).ordem)
   const criticas = lista.filter(e => slaPendencia(e.dataCriacao).nivel === 'critico').length

@@ -19,7 +19,7 @@ function montarMotoristasQueCarregam(captacoes) {
       const nome = texto(c.nome || c.motorista || 'Motorista sem nome')
       const telefone = texto(c.numero || c.telefone || c.telefoneMotorista || '')
       const telLimpo = limparTelefone(telefone)
-      const chave = telLimpo || `${nome.toLowerCase()}-${c.filial || 'sem-filial'}`
+      const chave = telLimpo || `${nome.toLowerCase()}-${c.filial || 'jatai-go'}`
       const atual = map.get(chave) || {
         chave,
         nome,
@@ -36,7 +36,7 @@ function montarMotoristasQueCarregam(captacoes) {
       atual.nome = nome || atual.nome
       atual.telefone = telefone || atual.telefone
       atual.operacoes.add(c.operacao || c.produto || 'Não informado')
-      atual.filiais.add(c.filial || 'principal')
+      atual.filiais.add(c.filial || 'jatai-go')
       atual.captadores.add(c.nomeCaptador || c.nomeUsuario || c.captador || c.usuario || '-')
       atual.carregamentos += 1
       atual.ultimaData = c.ultimaAtualizacao || c.data || c.dataISO || atual.ultimaData
@@ -107,7 +107,7 @@ export default function Admin() {
     return (!buscaMotorista || t.includes(buscaMotorista.toUpperCase())) && (!filtroOperacaoMotorista || m.operacoesLista.includes(filtroOperacaoMotorista))
   })
 
-  const filiaisAtivas = [...new Set([...rows.map(r => r.filial || 'principal'), ...pendentes.map(p => p.filial || 'principal')])]
+  const filiaisAtivas = [...new Set([...rows.map(r => r.filial || 'jatai-go'), ...pendentes.map(p => p.filial || 'jatai-go')])]
   const slaGlobal = resumirSLA(pendentes)
 
   const statsGlobal = {

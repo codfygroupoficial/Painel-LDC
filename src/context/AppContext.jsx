@@ -125,7 +125,7 @@ export function AppProvider({ children }) {
     try {
       const usuario = usuarioRef.current
       const isAdmin = usuario?.cargo === 'Admin'
-      const filial = isAdmin ? null : (usuario?.filial || 'principal')
+      const filial = isAdmin ? null : (usuario?.filial || 'jatai-go')
       const data = await sb.baixarTodos(filial)
 
       recebendoNuvem.current = true
@@ -235,7 +235,7 @@ export function AppProvider({ children }) {
   }, [])
 
   const salvarNuvem = useCallback(async (item, tipo) => {
-    const filial = item?.filial || usuarioRef.current?.filial || 'principal'
+    const filial = item?.filial || usuarioRef.current?.filial || 'jatai-go'
     const filaAtual = stateRef.current.filaNuvem
 
     if (!supabaseOnline.current || !navigator.onLine) {
@@ -367,7 +367,7 @@ export function AppProvider({ children }) {
 
   const adicionarLancada = useCallback(async (item) => {
     const s = stateRef.current
-    const filial = item.filial || usuarioRef.current?.filial || 'principal'
+    const filial = item.filial || usuarioRef.current?.filial || 'jatai-go'
     const novo = { ...item, id: gerarId(), filial, status: 'Aberto', lancadoPor: usuarioRef.current?.usuario || '-', dataLancamento: new Date().toLocaleString('pt-BR') }
     dispatch({ type: 'SET_ESTADIAS', payload: [novo, ...s.estadias] })
     dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: usuarioRef.current?.usuario || '-', acao: 'Adicionou estadia lançada', detalhes: `Placa ${novo.placa} | ${novo.valor}` }, ...s.historico].slice(0, 300) })
@@ -409,7 +409,7 @@ export function AppProvider({ children }) {
       if (up) anexos.push(up)
     }
     const s = stateRef.current
-    const filial = dados.filial || usuarioRef.current?.filial || 'principal'
+    const filial = dados.filial || usuarioRef.current?.filial || 'jatai-go'
     const novo = { ...dados, id: gerarId(), anexos, filial, status: 'A lançar', criadoPor: usuarioRef.current?.usuario || '-', dataCriacao: new Date().toLocaleString('pt-BR') }
     dispatch({ type: 'SET_A_LANCAR', payload: [novo, ...s.estadiasALancar] })
     dispatch({ type: 'SET_HISTORICO', payload: [{ data: new Date().toLocaleString('pt-BR'), usuario: usuarioRef.current?.usuario || '-', acao: 'Adicionou pendência', detalhes: `Placa ${novo.placa} | Filial ${filial}` }, ...s.historico].slice(0, 300) })
