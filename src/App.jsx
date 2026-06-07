@@ -18,13 +18,13 @@ const Historico = lazy(() => import('./pages/Historico'))
 const Relatorios = lazy(() => import('./pages/Relatorios.jsx'))
 const Backup = lazy(() => import('./pages/Backup'))
 const Admin = lazy(() => import('./pages/Admin'))
-import './captacao-theme.css'
-import './estadia-mobile.css'
-import './pro-polish.css'
-import './sidebar-reference.css'
-import './tempo-estadia.css'
-import './live-command.css'
-import './admin-pro.css'
+import './styles/captacao-theme.css'
+import './styles/estadia-mobile.css'
+import './styles/pro-polish.css'
+import './styles/sidebar-reference.css'
+import './styles/tempo-estadia.css'
+import './styles/live-command.css'
+import './styles/admin-pro.css'
 
 function CaptacaoIsolada() {
   const { usuarioAtual, logout } = useApp()
@@ -108,7 +108,7 @@ function PainelEstadia() {
               {isAdmin && abaRender === 'admin' && <Admin />}
             </Suspense>
 
-            <div className="footer">by Manoel</div>
+            <div className="footer">AYRES · Painel LDC</div>
           </main>
         </section>
       </div>
