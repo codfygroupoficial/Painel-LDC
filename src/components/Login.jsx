@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useApp } from '../context/AppContext'
 
 const Svg = ({ children, ...p }) => (
@@ -8,37 +8,14 @@ const Svg = ({ children, ...p }) => (
 )
 
 const ICONES = {
-  grid: <Svg><rect x="3" y="3" width="8" height="8" rx="1.5" /><rect x="13" y="3" width="8" height="8" rx="1.5" /><rect x="3" y="13" width="8" height="8" rx="1.5" /><rect x="13" y="13" width="8" height="8" rx="1.5" /></Svg>,
-  chart: <Svg><path d="M4 19V9" /><path d="M10 19V5" /><path d="M16 19v-7" /><path d="M22 19h-20" /></Svg>,
   shield: <Svg><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z" /></Svg>,
   bolt: <Svg><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" /></Svg>,
   brain: <Svg><path d="M9.5 3a2.5 2.5 0 00-2.5 2.5v1A2.5 2.5 0 005 9v1a2.5 2.5 0 00-1 4.9V16a2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5 2.5h1" /><path d="M14.5 3a2.5 2.5 0 012.5 2.5v1A2.5 2.5 0 0119 9v1a2.5 2.5 0 011 4.9V16a2.5 2.5 0 01-2.5 2.5 2.5 2.5 0 01-2.5 2.5h-1" /><path d="M9.5 21V3M14.5 21V3" /></Svg>,
   globe: <Svg width="16" height="16"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 010 18 14 14 0 010-18z" /></Svg>,
   chevronDown: <Svg width="12" height="12"><path d="M6 9l6 6 6-6" /></Svg>,
   chevronRight: <Svg width="14" height="14"><path d="M9 6l6 6-6 6" /></Svg>,
-  arrowRight: <Svg width="16" height="16"><path d="M5 12h14M13 6l6 6-6 6" /></Svg>,
-  close: <Svg width="20" height="20"><path d="M6 6l12 12M18 6L6 18" /></Svg>,
   lock: <Svg width="28" height="28"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></Svg>,
 }
-
-const modulos = [
-  {
-    id: 'estadia',
-    nome: 'Estadia',
-    subtitulo: 'Gerencie estadias, pátios e movimentações com total visibilidade.',
-    icon: 'grid',
-    cor: 'blue',
-    aba: 'inicio',
-  },
-  {
-    id: 'captacao',
-    nome: 'Captação',
-    subtitulo: 'Indicadores e resultados da captação de cargas em tempo real.',
-    icon: 'chart',
-    cor: 'orange',
-    aba: 'captacao',
-  },
-]
 
 const beneficios = [
   { icon: 'shield', texto: 'Controle Avançado' },
@@ -46,54 +23,27 @@ const beneficios = [
   { icon: 'brain', texto: 'Inteligência de Dados' },
 ]
 
-const cores = {
-  blue: {
-    texto: 'text-blue-500',
-    iconeWrap: 'bg-blue-500/10 border-blue-500/20 text-blue-500',
-    glow: 'hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6),0_0_24px_rgba(59,130,246,0.12)] hover:border-blue-500/30',
-    botao: 'bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-[0_10px_24px_rgba(37,99,235,0.35)]',
-  },
-  orange: {
-    texto: 'text-orange-500',
-    iconeWrap: 'bg-orange-500/10 border-orange-500/20 text-orange-500',
-    glow: 'hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.6),0_0_24px_rgba(249,115,22,0.12)] hover:border-orange-500/30',
-    botao: 'bg-gradient-to-r from-orange-600 to-orange-500 hover:shadow-[0_10px_24px_rgba(249,115,22,0.35)]',
-  },
-}
-
 export default function Login() {
-  const { entrar, mudarAba } = useApp()
+  const { entrar } = useApp()
   const [form, setForm] = useState({ usuario: '', senha: '' })
-  const [modulo, setModulo] = useState(null)
+  const [heroVisivel, setHeroVisivel] = useState(false)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
 
+  useEffect(() => {
+    const t = setTimeout(() => setHeroVisivel(true), 60)
+    return () => clearTimeout(t)
+  }, [])
+
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }))
-
-  const abrirAcesso = (m) => {
-    setModulo(m)
-    setErro('')
-    setForm({ usuario: '', senha: '' })
-    setTimeout(() => document.getElementById('portal-user')?.focus(), 80)
-  }
-
-  const fechar = () => {
-    if (carregando) return
-    setModulo(null)
-  }
 
   const handleLogin = async (e) => {
     e?.preventDefault()
-    if (carregando || !modulo) return
+    if (carregando) return
     setErro('')
     setCarregando(true)
-    localStorage.setItem('moduloInicialViaLog', modulo.id)
     const ok = await entrar(form.usuario, form.senha)
-    if (ok) {
-      mudarAba(modulo.aba)
-    } else {
-      setErro('Usuário ou senha inválidos.')
-    }
+    if (!ok) setErro('Usuário ou senha inválidos.')
     setCarregando(false)
   }
 
@@ -128,42 +78,61 @@ export default function Login() {
       </header>
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 py-10">
-        <div className="text-center mb-14 sm:mb-20 max-w-3xl">
-          <h2 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 sm:mb-8 tracking-tight">
+        <div className={`text-center mb-10 max-w-2xl transition-all duration-1000 ease-out ${heroVisivel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <h2 className="text-4xl sm:text-6xl font-bold mb-6 tracking-tight">
             Bem-vindo ao <span className="text-blue-500">AYRES</span>
           </h2>
-          <p className="text-slate-400 text-base sm:text-xl leading-relaxed font-light">
-            Acesse os painéis estratégicos da plataforma e gerencie suas operações com eficiência, segurança e inteligência de dados em tempo real.
+          <p className="text-slate-400 text-base sm:text-lg leading-relaxed font-light">
+            Entre com suas credenciais para acessar a plataforma. Um único login dá acesso aos painéis de Estadia e Captação.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 max-w-6xl w-full">
-          {modulos.map((m) => {
-            const c = cores[m.cor]
-            return (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => abrirAcesso(m)}
-                className={`text-left p-8 sm:p-12 flex flex-col justify-between min-h-[340px] sm:min-h-[450px] rounded-[2.5rem] border border-white/5 bg-gradient-to-br from-[#0d1117] to-[#080a0f] cursor-pointer transition-all duration-500 hover:-translate-y-3 hover:scale-[1.02] ${c.glow}`}
-              >
-                <div>
-                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-8 sm:mb-10 border ${c.iconeWrap}`}>
-                    {ICONES[m.icon]}
-                  </div>
-                  <h3 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-6 tracking-tight">
-                    Painel de <br />
-                    <span className={c.texto}>{m.nome}</span>
-                  </h3>
-                  <p className="text-slate-400 text-base sm:text-lg leading-relaxed max-w-xs">{m.subtitulo}</p>
-                </div>
-                <div className={`flex items-center gap-3 font-bold text-sm ${c.texto}`}>
-                  <span>ACESSAR MÓDULO</span>
-                  {ICONES.arrowRight}
-                </div>
-              </button>
-            )
-          })}
+        <div className={`w-full max-w-md bg-[#0d1117] border border-white/10 rounded-[2.5rem] p-8 sm:p-12 shadow-2xl transition-all duration-1000 ease-out ${heroVisivel ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 border bg-blue-500/10 border-blue-500/20 text-blue-500">
+              {ICONES.lock}
+            </div>
+            <h4 className="text-2xl font-bold mb-2">Acessar plataforma</h4>
+            <p className="text-slate-500 text-sm">Informe suas credenciais de acesso</p>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleLogin}>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Usuário</label>
+              <input
+                id="portal-user"
+                type="text"
+                placeholder="Seu ID de acesso"
+                autoComplete="username"
+                value={form.usuario}
+                onChange={(e) => set('usuario', e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && document.getElementById('portal-pass')?.focus()}
+                className="w-full px-5 py-4 rounded-2xl outline-none text-white bg-white/[.03] border border-white/5 transition-all focus:border-blue-500 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] focus:bg-white/5"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Senha</label>
+              <input
+                id="portal-pass"
+                type="password"
+                placeholder="••••••••"
+                autoComplete="current-password"
+                value={form.senha}
+                onChange={(e) => set('senha', e.target.value)}
+                className="w-full px-5 py-4 rounded-2xl outline-none text-white bg-white/[.03] border border-white/5 transition-all focus:border-blue-500 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] focus:bg-white/5"
+              />
+            </div>
+
+            {erro && <p className="text-red-400 text-sm text-center -mt-2">{erro}</p>}
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="w-full py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg shadow-xl mt-2 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-wait bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-[0_10px_24px_rgba(37,99,235,0.35)]"
+            >
+              {carregando ? 'Validando...' : <>ENTRAR NA PLATAFORMA {ICONES.chevronRight}</>}
+            </button>
+          </form>
         </div>
       </main>
 
@@ -180,67 +149,6 @@ export default function Login() {
           © 2026 AYRES Logística. Todos os direitos reservados.
         </p>
       </footer>
-
-      {modulo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-md" onClick={fechar}>
-          <div
-            className="bg-[#0d1117] border border-white/10 w-full max-w-md rounded-[2.5rem] p-8 sm:p-12 relative shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button type="button" onClick={fechar} className="absolute top-7 right-7 sm:top-8 sm:right-8 text-slate-500 hover:text-white transition-colors">
-              {ICONES.close}
-            </button>
-
-            <div className="text-center mb-10">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 border ${cores[modulo.cor].iconeWrap}`}>
-                {ICONES[modulo.icon]}
-              </div>
-              <h4 className="text-2xl font-bold mb-2">
-                Acessar Painel de <span className={cores[modulo.cor].texto}>{modulo.nome}</span>
-              </h4>
-              <p className="text-slate-500 text-sm">Informe suas credenciais de acesso</p>
-            </div>
-
-            <form className="space-y-6" onSubmit={handleLogin}>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Usuário</label>
-                <input
-                  id="portal-user"
-                  type="text"
-                  placeholder="Seu ID de acesso"
-                  autoComplete="username"
-                  value={form.usuario}
-                  onChange={(e) => set('usuario', e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && document.getElementById('portal-pass')?.focus()}
-                  className="w-full px-5 py-4 rounded-2xl outline-none text-white bg-white/[.03] border border-white/5 transition-all focus:border-blue-500 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] focus:bg-white/5"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Senha</label>
-                <input
-                  id="portal-pass"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  value={form.senha}
-                  onChange={(e) => set('senha', e.target.value)}
-                  className="w-full px-5 py-4 rounded-2xl outline-none text-white bg-white/[.03] border border-white/5 transition-all focus:border-blue-500 focus:shadow-[0_0_0_4px_rgba(59,130,246,0.1)] focus:bg-white/5"
-                />
-              </div>
-
-              {erro && <p className="text-red-400 text-sm text-center -mt-2">{erro}</p>}
-
-              <button
-                type="submit"
-                disabled={carregando}
-                className={`w-full py-4 sm:py-5 rounded-2xl font-bold text-base sm:text-lg shadow-xl mt-2 flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-wait ${cores[modulo.cor].botao}`}
-              >
-                {carregando ? 'Validando...' : <>ENTRAR NO PAINEL {ICONES.chevronRight}</>}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
 
       <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-7 flex items-center gap-2 text-slate-600 text-[10px] uppercase tracking-widest font-bold opacity-70 hover:opacity-100 transition-opacity">
         {ICONES.lock}

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, lazy, Suspense } from 'react'
 import { useApp } from './context/AppContext'
 import Loader from './components/Loader'
 import Login from './components/Login'
+import SelecaoPainel from './components/SelecaoPainel'
 import Sidebar from './components/Sidebar'
 import Header from './components/Header'
 import LivePanel from './components/LivePanel'
@@ -126,14 +127,15 @@ export default function App() {
 
   if (loading) return <Loader />
 
-  const moduloInicial = localStorage.getItem('moduloInicialViaLog') || 'estadia'
+  const moduloInicial = localStorage.getItem('moduloInicialViaLog')
 
   return (
     <>
       <SoundManager />
       {!usuarioAtual && <Login />}
+      {usuarioAtual && !moduloInicial && <SelecaoPainel />}
       {usuarioAtual && moduloInicial === 'captacao' && <CaptacaoIsolada />}
-      {usuarioAtual && moduloInicial !== 'captacao' && <PainelEstadia />}
+      {usuarioAtual && moduloInicial && moduloInicial !== 'captacao' && <PainelEstadia />}
       <Toast />
     </>
   )

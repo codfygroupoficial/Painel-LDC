@@ -52,17 +52,19 @@ const inputStyle = {
   width: '100%',
   padding: '11px 14px',
   borderRadius: 11,
-  border: '1px solid #e2e8f0',
+  border: '1px solid var(--line)',
+  background: 'var(--card)',
+  color: 'var(--text)',
   fontSize: 14,
   marginBottom: 16,
   outline: 'none',
   boxSizing: 'border-box',
   fontFamily: 'inherit',
 }
-const lblStyle = { display: 'block', fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 6 }
+const lblStyle = { display: 'block', fontSize: 13, fontWeight: 700, color: 'var(--muted)', marginBottom: 6 }
 const iconBtn = {
-  border: '1px solid #e2e8f0',
-  background: '#fff',
+  border: '1px solid var(--line)',
+  background: 'var(--card)',
   borderRadius: 8,
   padding: 7,
   cursor: 'pointer',

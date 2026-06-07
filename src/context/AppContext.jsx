@@ -301,6 +301,7 @@ export function AppProvider({ children }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('usuarioLogadoViaLog')
+    localStorage.removeItem('moduloInicialViaLog')
     dispatch({ type: 'SET_USUARIO', payload: null })
     if (canalPresenca.current) { canalPresenca.current.unsubscribe(); canalPresenca.current = null }
   }, [])
