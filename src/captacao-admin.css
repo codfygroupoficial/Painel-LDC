@@ -150,14 +150,14 @@
 
 .capadm-box-head h3 {
   margin: 0;
-  color: var(--text);
+  color: #0f172a;
   font-size: 18px;
   letter-spacing: -.5px;
 }
 
 .capadm-box-head p {
   margin: 4px 0 0;
-  color: var(--muted);
+  color: #64748b;
   font-size: 12px;
 }
 
@@ -263,10 +263,11 @@
   padding: 11px 10px;
   text-align: left;
   font-size: 13px;
+  color: #0f172a;
 }
 
 .capadm-table-wrap th {
-  color: var(--muted);
+  color: #64748b;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: .45px;
@@ -274,7 +275,7 @@
 
 .capadm-table-wrap td small {
   display: block;
-  color: var(--muted);
+  color: #64748b;
   margin-top: 3px;
 }
 
@@ -305,7 +306,7 @@
 .capadm-event span { color: var(--muted); font-size: 11px; }
 .capadm-event strong { margin: 4px 0; color: var(--text); }
 .capadm-event small { color: var(--muted); }
-.capadm-empty { color: var(--muted); text-align: center; padding: 22px; }
+.capadm-empty { color: #64748b; text-align: center; padding: 22px; }
 
 @media (max-width: 900px) {
   .capadm-cards,
