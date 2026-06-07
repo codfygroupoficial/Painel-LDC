@@ -262,10 +262,14 @@ export function AppProvider({ children }) {
     const filaAtual = stateRef.current.filaNuvem
     if (!supabaseOnline.current || !navigator.onLine) {
       dispatch({ type: 'SET_FILA', payload: [...filaAtual, { acao: 'delete', local_id: String(id) }] })
-      return
+      return true
     }
-    try { await sb.deletar(id) } catch {
+    try {
+      await sb.deletar(id)
+      return true
+    } catch {
       dispatch({ type: 'SET_FILA', payload: [...filaAtual, { acao: 'delete', local_id: String(id) }] })
+      return false
     }
   }, [])
 
@@ -347,9 +351,11 @@ export function AppProvider({ children }) {
   const excluirUsuario = useCallback(async (login) => {
     if (login === ADMIN_USERNAME) return
     dispatch({ type: 'SET_USUARIOS', payload: stateRef.current.usuarios.filter(u => u.usuario !== login) })
-    try { await sb.deletarUsuario(login) } catch {}
-    try { await deletarProfileV2(login) } catch {}
-    toast('Usuário excluído.', 'ok')
+    let removidoNaNuvem = false
+    try { await sb.deletarUsuario(login); removidoNaNuvem = true } catch {}
+    try { await deletarProfileV2(login); removidoNaNuvem = true } catch {}
+    if (removidoNaNuvem) toast('Usuário excluído.', 'ok')
+    else toast('Removido localmente, mas a nuvem recusou a exclusão (verifique permissões). Pode reaparecer ao sincronizar.', 'warn')
   }, [toast])
 
   const criarFilial = useCallback((dados) => {
@@ -365,8 +371,12 @@ export function AppProvider({ children }) {
   const excluirFilial = useCallback(async (id) => {
     if (id === 'jatai-go' || id === 'mineiros-go') { toast('Filial padrão não pode ser excluída.', 'err'); return }
     dispatch({ type: 'SET_FILIAIS', payload: stateRef.current.filiais.filter(f => f.id !== id) })
-    try { await deletarFilialV2(id) } catch {}
-    toast('Filial removida.', 'ok')
+    try {
+      await deletarFilialV2(id)
+      toast('Filial removida.', 'ok')
+    } catch {
+      toast('Removida localmente, mas a nuvem recusou a exclusão (verifique permissões). Pode reaparecer ao sincronizar.', 'warn')
+    }
   }, [toast])
 
   const adicionarLancada = useCallback(async (item) => {
@@ -402,8 +412,9 @@ export function AppProvider({ children }) {
 
   const excluirLancada = useCallback(async (id) => {
     dispatch({ type: 'SET_ESTADIAS', payload: stateRef.current.estadias.filter(e => String(e.id) !== String(id)) })
-    toast('Estadia excluída.', 'ok')
-    await deletarNuvem(id)
+    const ok = await deletarNuvem(id)
+    if (ok) toast('Estadia excluída.', 'ok')
+    else toast('Removida localmente, mas a nuvem recusou a exclusão (verifique permissões). Pode reaparecer ao sincronizar.', 'warn')
   }, [deletarNuvem, toast])
 
   const adicionarALancar = useCallback(async (dados, arquivos) => {
@@ -452,8 +463,9 @@ export function AppProvider({ children }) {
 
   const excluirALancar = useCallback(async (id) => {
     dispatch({ type: 'SET_A_LANCAR', payload: stateRef.current.estadiasALancar.filter(e => String(e.id) !== String(id)) })
-    await deletarNuvem(id)
-  }, [deletarNuvem])
+    const ok = await deletarNuvem(id)
+    if (!ok) toast('Removida localmente, mas a nuvem recusou a exclusão (verifique permissões). Pode reaparecer ao sincronizar.', 'warn')
+  }, [deletarNuvem, toast])
 
   const limparHistorico = useCallback(() => {
     dispatch({ type: 'SET_HISTORICO', payload: [] })

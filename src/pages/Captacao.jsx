@@ -614,13 +614,17 @@ export default function Captacao() {
     const listaAtualizada = motoristas.filter((m) => String(m.id) !== String(id))
     setMotoristas(listaAtualizada)
     saveLocal(listaAtualizada)
+    let removidoNaNuvem = false
     try {
       await v2.deletarCaptacaoV2(id)
+      removidoNaNuvem = true
     } catch {}
     try {
       await legacy.deletar(id)
-      toast?.('Motorista excluído.', 'ok')
+      removidoNaNuvem = true
     } catch {}
+    if (removidoNaNuvem) toast?.('Motorista excluído.', 'ok')
+    else toast?.('Removido localmente, mas a nuvem recusou a exclusão (verifique permissões). O registro pode reaparecer.', 'warn')
   }
   const abrirWhats = (m) => abrirWhatsNumero(m.numero, m.nome)
 

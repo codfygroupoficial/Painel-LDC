@@ -32,8 +32,9 @@ export const salvar = async (item, tipo, filial = 'jatai-go') => {
 
 export const deletar = async (id) => {
   const sb = getClient()
-  const { error } = await sb.from(TABLE).delete().eq('local_id', String(id))
+  const { data, error } = await sb.from(TABLE).delete().eq('local_id', String(id)).select('local_id')
   if (error) throw error
+  if (!data?.length) throw new Error('Nenhum registro removido na nuvem (verifique permissões/RLS).')
 }
 
 export const baixarTodos = async (filial = null) => {
@@ -76,8 +77,9 @@ export const salvarUsuario = async (usuario) => {
 
 export const deletarUsuario = async (usuario) => {
   const sb = getClient()
-  const { error } = await sb.from(USUARIOS_TABLE).delete().eq('usuario', String(usuario))
+  const { data, error } = await sb.from(USUARIOS_TABLE).delete().eq('usuario', String(usuario)).select('usuario')
   if (error) throw error
+  if (!data?.length) throw new Error('Nenhum usuário removido na nuvem (verifique permissões/RLS).')
 }
 
 export const uploadAnexo = async (file) => {

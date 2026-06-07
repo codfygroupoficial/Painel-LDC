@@ -51,15 +51,17 @@ export async function upsertFilialBasica(filialId, nome = '') {
 export async function deletarFilialV2(filialId) {
   if (!filialId) return
   const sb = getClient()
-  const { error } = await sb.from(T.filiais).delete().eq('id', String(filialId))
+  const { data, error } = await sb.from(T.filiais).delete().eq('id', String(filialId)).select('id')
   if (error) throw error
+  if (!data?.length) throw new Error('Nenhuma filial removida na nuvem (verifique permissões/RLS).')
 }
 
 export async function deletarProfileV2(usuario) {
   if (!usuario) return
   const sb = getClient()
-  const { error } = await sb.from(T.profiles).delete().eq('usuario', String(usuario))
+  const { data, error } = await sb.from(T.profiles).delete().eq('usuario', String(usuario)).select('usuario')
   if (error) throw error
+  if (!data?.length) throw new Error('Nenhum perfil removido na nuvem (verifique permissões/RLS).')
 }
 
 export async function upsertProfileBasico(usuario) {
@@ -184,8 +186,9 @@ export async function deletarCaptacaoV2(localId) {
   const sb = getClient()
   const anterior = await carregarCaptacaoAnterior(localId)
   if (anterior?.id) await sb.from(T.carregamentos).delete().eq('captacao_id', anterior.id).catch(() => {})
-  const { error } = await sb.from(T.captacoes).delete().eq('local_id', String(localId))
+  const { data, error } = await sb.from(T.captacoes).delete().eq('local_id', String(localId)).select('local_id')
   if (error) throw error
+  if (!data?.length) throw new Error('Nenhuma captação removida na nuvem (verifique permissões/RLS).')
 }
 
 export function captacaoRowToItem(row) {
