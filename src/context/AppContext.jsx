@@ -3,6 +3,7 @@ import { defaultUsers, ADMIN_USERNAME } from '../data/defaultUsers'
 import { FILIAIS } from '../data/filiais'
 import { gerarId, baixarArquivo, dataISOTexto, calcularEstadia } from '../utils/index'
 import * as sb from '../lib/supabase'
+import { deletarFilialV2, deletarProfileV2 } from '../lib/supabaseV2'
 
 const hashSenha = async (senha) => {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(senha + 'ldc2025'))
@@ -347,6 +348,7 @@ export function AppProvider({ children }) {
     if (login === ADMIN_USERNAME) return
     dispatch({ type: 'SET_USUARIOS', payload: stateRef.current.usuarios.filter(u => u.usuario !== login) })
     try { await sb.deletarUsuario(login) } catch {}
+    try { await deletarProfileV2(login) } catch {}
     toast('Usuário excluído.', 'ok')
   }, [toast])
 
@@ -360,9 +362,10 @@ export function AppProvider({ children }) {
     return true
   }, [toast])
 
-  const excluirFilial = useCallback((id) => {
+  const excluirFilial = useCallback(async (id) => {
     if (id === 'jatai-go' || id === 'mineiros-go') { toast('Filial padrão não pode ser excluída.', 'err'); return }
     dispatch({ type: 'SET_FILIAIS', payload: stateRef.current.filiais.filter(f => f.id !== id) })
+    try { await deletarFilialV2(id) } catch {}
     toast('Filial removida.', 'ok')
   }, [toast])
 

@@ -149,7 +149,7 @@ export default function Dashboard({ onNovaLancada, onNovaPendencia }) {
   const rotas = [
     { nome: 'Jataí → Santos', value: totalEstadias + 6, color: '#2563eb' },
     { nome: 'Mineiros → Santos', value: totalPendentes + 4, color: '#22c55e' },
-    { nome: 'Rondonópolis → Santos', value: urgentes + 3, color: '#a855f7' },
+    { nome: 'Rio Verde → Santos', value: urgentes + 3, color: '#a855f7' },
     { nome: 'Alto Araguaia → Santos', value: abertas + 2, color: '#f97316' },
   ]
   const maxRota = Math.max(...rotas.map(r => r.value), 1)

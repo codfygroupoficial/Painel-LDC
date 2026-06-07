@@ -34,8 +34,8 @@ function CaptacaoIsolada() {
     logout()
   }
 
-  const trocarParaEstadia = () => {
-    localStorage.setItem('moduloInicialViaLog', 'estadia')
+  const voltarAoPortal = () => {
+    localStorage.removeItem('moduloInicialViaLog')
     window.location.reload()
   }
 
@@ -50,7 +50,7 @@ function CaptacaoIsolada() {
           </div>
           <div className="capture-actions-pro">
             <span className="capture-user-chip-pro">{usuarioAtual?.nome || usuarioAtual?.usuario || 'Usuário'}</span>
-            <button className="capture-action-btn-pro" onClick={trocarParaEstadia}>Painel de estadia</button>
+            <button className="capture-action-btn-pro" onClick={voltarAoPortal}>Voltar ao portal</button>
             <button className="capture-action-btn-pro" onClick={sair}>Sair</button>
           </div>
         </section>

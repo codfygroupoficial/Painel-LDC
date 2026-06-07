@@ -9,8 +9,8 @@ export default function Header({ onMenuMobile }) {
   const [showConfig, setShowConfig] = useState(false)
   const [showCommand, setShowCommand] = useState(false)
 
-  const irParaCaptacao = () => {
-    localStorage.setItem('moduloInicialViaLog', 'captacao')
+  const voltarAoPortal = () => {
+    localStorage.removeItem('moduloInicialViaLog')
     window.location.reload()
   }
 
@@ -39,9 +39,9 @@ export default function Header({ onMenuMobile }) {
               </div>
             </div>
 
-            <button className="btn-light" onClick={irParaCaptacao} title="Ir para o Painel de Captação" style={{ fontSize: 12, gap: 6 }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 18V6M4 18h16M8 15v-4M12 15V8m4 7v-6M7 5h10" /></svg>
-              <span>Captação</span>
+            <button className="btn-light" onClick={voltarAoPortal} title="Voltar ao portal de módulos" style={{ fontSize: 12, gap: 6 }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7m-9-7v18m-7-9h18" /></svg>
+              <span>Portal</span>
             </button>
 
             <NotificationBell />

@@ -48,6 +48,20 @@ export async function upsertFilialBasica(filialId, nome = '') {
   if (error) throw error
 }
 
+export async function deletarFilialV2(filialId) {
+  if (!filialId) return
+  const sb = getClient()
+  const { error } = await sb.from(T.filiais).delete().eq('id', String(filialId))
+  if (error) throw error
+}
+
+export async function deletarProfileV2(usuario) {
+  if (!usuario) return
+  const sb = getClient()
+  const { error } = await sb.from(T.profiles).delete().eq('usuario', String(usuario))
+  if (error) throw error
+}
+
 export async function upsertProfileBasico(usuario) {
   if (!usuario?.usuario) return
   const sb = getClient()
