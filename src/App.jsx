@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, lazy, Suspense } from 'react'
 import { useApp } from './context/AppContext'
 import Loader from './components/Loader'
 import Login from './components/Login'
@@ -8,14 +8,15 @@ import LivePanel from './components/LivePanel'
 import Toast from './components/Toast'
 import SoundManager from './components/SoundManager'
 import Dashboard from './pages/Dashboard'
-import EstadiaLancada from './pages/EstadiaLancada'
-import EstadiaALancar from './pages/EstadiaALancar'
-import Captacao from './pages/Captacao'
-import CaptacaoAdmin from './pages/CaptacaoAdmin'
-import Historico from './pages/Historico'
-import Relatorios from './pages/Relatorios.jsx'
-import Backup from './pages/Backup'
-import Admin from './pages/Admin'
+
+const EstadiaLancada = lazy(() => import('./pages/EstadiaLancada'))
+const EstadiaALancar = lazy(() => import('./pages/EstadiaALancar'))
+const Captacao = lazy(() => import('./pages/Captacao'))
+const CaptacaoAdmin = lazy(() => import('./pages/CaptacaoAdmin'))
+const Historico = lazy(() => import('./pages/Historico'))
+const Relatorios = lazy(() => import('./pages/Relatorios.jsx'))
+const Backup = lazy(() => import('./pages/Backup'))
+const Admin = lazy(() => import('./pages/Admin'))
 import './captacao-theme.css'
 import './estadia-mobile.css'
 import './pro-polish.css'
@@ -53,7 +54,7 @@ function CaptacaoIsolada() {
           </div>
         </section>
 
-        <section className="capture-panel-wrap-pro"><Captacao /></section>
+        <section className="capture-panel-wrap-pro"><Suspense fallback={<Loader />}><Captacao /></Suspense></section>
         <div className="capture-footer-pro">AYRES · Central de captação</div>
       </main>
     </div>
@@ -96,13 +97,15 @@ function PainelEstadia() {
             <LivePanel />
 
             {abaRender === 'inicio' && <Dashboard onNovaLancada={focarLancada} onNovaPendencia={focarALancar} />}
-            {abaRender === 'lancadas' && <EstadiaLancada formRef={formLancadaRef} />}
-            {abaRender === 'alancar' && <EstadiaALancar formRef={formALancarRef} />}
-            {isAdmin && abaRender === 'captacaoAdmin' && <CaptacaoAdmin />}
-            {isAdmin && abaRender === 'historico' && <Historico />}
-            {isAdmin && abaRender === 'relatorios' && <Relatorios />}
-            {isAdmin && abaRender === 'backup' && <Backup />}
-            {isAdmin && abaRender === 'admin' && <Admin />}
+            <Suspense fallback={<Loader />}>
+              {abaRender === 'lancadas' && <EstadiaLancada formRef={formLancadaRef} />}
+              {abaRender === 'alancar' && <EstadiaALancar formRef={formALancarRef} />}
+              {isAdmin && abaRender === 'captacaoAdmin' && <CaptacaoAdmin />}
+              {isAdmin && abaRender === 'historico' && <Historico />}
+              {isAdmin && abaRender === 'relatorios' && <Relatorios />}
+              {isAdmin && abaRender === 'backup' && <Backup />}
+              {isAdmin && abaRender === 'admin' && <Admin />}
+            </Suspense>
 
             <div className="footer">by Manoel</div>
           </main>
