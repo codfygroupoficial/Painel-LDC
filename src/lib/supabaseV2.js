@@ -185,10 +185,24 @@ export async function salvarCaptacaoV2(item, usuarioAtual = null) {
 export async function deletarCaptacaoV2(localId) {
   const sb = getClient()
   const anterior = await carregarCaptacaoAnterior(localId)
-  if (anterior?.id) await sb.from(T.carregamentos).delete().eq('captacao_id', anterior.id).catch(() => {})
-  const { data, error } = await sb.from(T.captacoes).delete().eq('local_id', String(localId)).select('local_id')
+  if (!anterior?.id) return true
+
+  // Primeiro tenta a função SQL segura (delete_captacao_completa), que apaga
+  // dependentes (eventos/carregamentos) e a captação numa só operação no servidor.
+  try {
+    const { data: rpcOk, error: rpcError } = await sb.rpc('delete_captacao_completa', { p_local_id: String(localId) })
+    if (!rpcError && rpcOk) return true
+  } catch {}
+
+  // Fallback: apaga manualmente respeitando a ordem das foreign keys
+  // (eventos -> carregamentos -> captação) e confirma a remoção (RLS).
+  await sb.from(T.eventos).delete().eq('captacao_id', anterior.id)
+  await sb.from(T.carregamentos).delete().eq('captacao_id', anterior.id)
+
+  const { data, error } = await sb.from(T.captacoes).delete().eq('id', anterior.id).select('id')
   if (error) throw error
   if (!data?.length) throw new Error('Nenhuma captação removida na nuvem (verifique permissões/RLS).')
+  return true
 }
 
 export function captacaoRowToItem(row) {
