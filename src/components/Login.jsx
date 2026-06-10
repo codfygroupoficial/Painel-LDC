@@ -60,6 +60,22 @@ export default function Login() {
         }}
       />
 
+      <div className="login-road" aria-hidden="true">
+        <svg className="login-truck" viewBox="0 0 200 90" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="18" width="118" height="46" rx="6" fill="#1d4ed8" />
+          <rect x="10" y="24" width="102" height="18" rx="3" fill="#3b82f6" opacity="0.55" />
+          <path d="M120 28 h38 a10 10 0 0 1 10 10 v26 h-48 z" fill="#0ea5e9" />
+          <rect x="132" y="34" width="24" height="16" rx="2" fill="#bfdbfe" />
+          <rect x="0" y="64" width="172" height="6" fill="#0f172a" />
+          <circle className="login-truck-wheel" cx="36" cy="74" r="10" fill="#0f172a" />
+          <circle cx="36" cy="74" r="4" fill="#94a3b8" />
+          <circle className="login-truck-wheel" cx="100" cy="74" r="10" fill="#0f172a" />
+          <circle cx="100" cy="74" r="4" fill="#94a3b8" />
+          <circle className="login-truck-wheel" cx="152" cy="74" r="10" fill="#0f172a" />
+          <circle cx="152" cy="74" r="4" fill="#94a3b8" />
+        </svg>
+      </div>
+
       <header className="px-6 sm:px-10 py-8 flex justify-between items-center max-w-7xl mx-auto w-full">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">

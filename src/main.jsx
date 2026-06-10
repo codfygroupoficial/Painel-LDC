@@ -6,6 +6,7 @@ import './index.css'
 import './styles/mobile-polish.css'
 import './styles/mobile-captacao.css'
 import './styles/login-mobile.css'
+import './styles/login-truck.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
